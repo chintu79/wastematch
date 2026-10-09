@@ -351,6 +351,21 @@ Application rollback does not automatically reverse a database migration safely.
 
 Configure database connection pooling and limits appropriate to the hosting environment.
 
+#### PgBouncer Connection Multiplexer
+To prevent connection exhaustion when Celery worker pools or FastAPI instances scale up under heavy match evaluation load, `PgBouncer` is introduced in front of PostgreSQL:
+- **Pool Mode**: Transaction pooling (`transaction`) multiplexes hundreds of client connections across a bounded server connection pool without keeping server backends idle.
+- **Port**: Listens on port `6432`.
+- **Max Client Connections**: `500` (configurable via `PGBOUNCER_MAX_CLIENT_CONN`).
+- **Server Pool Size**: `20` default (`PGBOUNCER_DEFAULT_POOL_SIZE`), capped at `50` (`PGBOUNCER_MAX_DB_CONNECTIONS`), ensuring total server connections remain well below PostgreSQL's limit (`100 max_connections`).
+
+#### SQLAlchemy QueuePool Tuning
+The application engine in `app/database.py` configures SQLAlchemy's `QueuePool`:
+- `DB_POOL_SIZE`: Default `20` for API pods, `5` for Celery worker processes.
+- `DB_MAX_OVERFLOW`: Default `10` for API pods, `5` for worker processes to accommodate temporary burst traffic.
+- `DB_POOL_TIMEOUT`: Default `30` seconds timeout before failing a checkout request.
+- `DB_POOL_RECYCLE`: Default `1800` seconds (30 minutes) to refresh long-lived connections.
+- `DB_POOL_PRE_PING`: Default `true` to test connection liveness before checkout and gracefully discard stale or closed sockets.
+
 The total connection capacity across API instances, worker processes, migration tools, and administrative access must remain within the database's limits.
 
 Monitor connection saturation, slow queries, lock waits, storage capacity, and failed transactions.

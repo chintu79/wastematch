@@ -1,8 +1,15 @@
-import pytest
 import os
+import pytest
 from fastapi.testclient import TestClient
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, event
 from sqlalchemy.orm import sessionmaker
+
+# Provide test defaults so pytest runs cleanly out of the box
+os.environ.setdefault("DATABASE_URL", "sqlite:///./test.db")
+os.environ.setdefault("OIDC_ISSUER", "https://mock-issuer.auth0.com/")
+os.environ.setdefault("OIDC_CLIENT_ID", "mock-client-id")
+os.environ.setdefault("OIDC_AUDIENCE", "https://mock-audience.com/")
+os.environ.setdefault("JWT_SECRET_KEY", "mock-secret-key-that-is-at-least-32-chars-long")
 
 from app.main import app
 from app.database import Base, get_db
@@ -16,6 +23,19 @@ if SQLALCHEMY_DATABASE_URL.startswith("sqlite"):
     engine = create_engine(
         SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False}
     )
+
+    @event.listens_for(engine, "connect")
+    def _sqlite_spatial_mock(dbapi_connection, connection_record):
+        import contextlib
+        for fn in [
+            "RecoverGeometryColumn",
+            "DiscardGeometryColumn",
+            "CreateSpatialIndex",
+            "DisableSpatialIndex",
+            "InitSpatialMetaData",
+        ]:
+            with contextlib.suppress(Exception):
+                dbapi_connection.create_function(fn, -1, lambda *args: 1)
 else:
     engine = create_engine(SQLALCHEMY_DATABASE_URL)
 

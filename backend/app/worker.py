@@ -126,17 +126,11 @@ def enforce_retention_policies():
     """
     logger.info("starting_retention_enforcement")
     try:
-        import os
         from datetime import datetime, timedelta
-
-        from sqlalchemy import create_engine
-        from sqlalchemy.orm import Session
 
         from app.models import Document, DocumentStatus, Inquiry, InquiryStatus, User
 
-        DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./wastematch.db")
-        engine = create_engine(DATABASE_URL)
-        session = Session(engine)
+        session = SessionLocal()
 
         now = datetime.utcnow()
         thirty_days_ago = now - timedelta(days=30)
