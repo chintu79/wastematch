@@ -3,7 +3,7 @@ import uuid
 from datetime import datetime
 
 from sqlalchemy import JSON, Column, DateTime, Boolean, Enum, Float, ForeignKey, Integer, String
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.dialects.postgresql import UUID, JSONB
 from sqlalchemy.orm import relationship
 
 from .database import Base
@@ -138,6 +138,7 @@ class MaterialBatch(Base):
     generated_at = Column(DateTime, nullable=True)
     sampled_at = Column(DateTime, nullable=True)
     batch_status = Column(Enum(BatchStatus), default=BatchStatus.AVAILABLE)
+    properties = Column(JSON().with_variant(JSONB, 'postgresql'), default=dict)
     created_at = Column(DateTime, default=datetime.utcnow)
 
 class PropertyDefinition(Base):
@@ -152,22 +153,6 @@ class PropertyDefinition(Base):
     definition_version = Column(Integer, default=1)
     active = Column(Integer, default=1)
 
-class BatchMeasurement(Base):
-    __tablename__ = "batch_measurements"
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
-    batch_id = Column(UUID(as_uuid=True), ForeignKey("material_batches.id"), nullable=False)
-    property_definition_id = Column(UUID(as_uuid=True), ForeignKey("property_definitions.id"), nullable=False)
-    numeric_value = Column(Float, nullable=True)
-    text_value = Column(String, nullable=True)
-    unit = Column(String, nullable=False)
-    measurement_basis = Column(String, nullable=True)
-    measurement_method = Column(String, nullable=True)
-    sample_reference = Column(String, nullable=True)
-    measured_at = Column(DateTime, nullable=True)
-    reported_by_organization_id = Column(UUID(as_uuid=True), ForeignKey("organizations.id"), nullable=True)
-    evidence_document_id = Column(UUID(as_uuid=True), nullable=True)
-    verification_status = Column(Enum(MeasurementVerificationStatus), default=MeasurementVerificationStatus.UNVERIFIED)
-    created_at = Column(DateTime, default=datetime.utcnow)
 
 class JurisdictionLevel(enum.Enum):
     LOCAL = "LOCAL"

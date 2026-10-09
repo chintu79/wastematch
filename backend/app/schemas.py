@@ -67,7 +67,6 @@ from .models import (
     CategoryStatus,
     DataType,
     ListingStatus,
-    MeasurementVerificationStatus,
 )
 
 
@@ -119,6 +118,7 @@ class MaterialBatchBase(BaseModel):
     quantity_unit: str
     generated_at: datetime | None = None
     sampled_at: datetime | None = None
+    properties: dict[str, Any] = {}
 
 class MaterialBatchCreate(MaterialBatchBase):
     listing_id: UUID
@@ -151,32 +151,6 @@ class PropertyDefinitionResponse(PropertyDefinitionBase):
     class Config:
         from_attributes = True
 
-class BatchMeasurementBase(BaseModel):
-    numeric_value: float | None = None
-    text_value: str | None = None
-    unit: str
-    measurement_basis: str | None = None
-    measurement_method: str | None = None
-    sample_reference: str | None = None
-    measured_at: datetime | None = None
-
-class BatchMeasurementCreate(BatchMeasurementBase):
-    batch_id: UUID
-    property_definition_id: UUID
-    reported_by_organization_id: UUID | None = None
-    evidence_document_id: UUID | None = None
-
-class BatchMeasurementResponse(BatchMeasurementBase):
-    id: UUID
-    batch_id: UUID
-    property_definition_id: UUID
-    reported_by_organization_id: UUID | None = None
-    evidence_document_id: UUID | None = None
-    verification_status: MeasurementVerificationStatus
-    created_at: datetime
-
-    class Config:
-        from_attributes = True
 
 from .models import (
     EligibilityStatus,
