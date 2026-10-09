@@ -16,10 +16,12 @@ def create_rule(rule: schemas.RegulatoryRuleCreate, db: Session = Depends(get_te
     db.refresh(db_rule)
     return db_rule
 
-@router.get("/rules", response_model=list[schemas.RegulatoryRuleResponse])
-def get_rules(db: Session = Depends(get_tenant_db)):
-    return db.query(models.RegulatoryRule).all()
-
+@router.get("/rules", response_model=schemas.PaginatedResponse[schemas.RegulatoryRuleResponse])
+def get_rules(db: Session = Depends(get_tenant_db), page: int = 1, size: int = 50):
+    query = db.query(models.RegulatoryRule)
+    total = query.count()
+    items = query.offset((page - 1) * size).limit(size).all()
+    return schemas.PaginatedResponse(data=items, total=total, page=page, size=size)
 @router.post("/evaluate", response_model=schemas.RegulatoryEvaluationResponse, status_code=status.HTTP_201_CREATED)
 def evaluate_compliance(evaluation: schemas.RegulatoryEvaluationCreate, db: Session = Depends(get_tenant_db), current_user: models.User = Depends(get_current_user)):
     db_eval = models.RegulatoryEvaluation(**evaluation.model_dump())

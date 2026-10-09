@@ -4,7 +4,7 @@ def test_create_material_category(client):
         "name": "Plastic Waste",
         "description": "Various plastics"
     }
-    response = client.post("/api/v1/categories", json=cat_data)
+    response = client.post("/api/v1/materials/categories", json=cat_data)
     assert response.status_code == 201
     assert response.json()["name"] == "Plastic Waste"
 
@@ -18,7 +18,7 @@ def test_create_listing(client):
     fac_id = fac_resp.json()["id"]
 
     # Create category
-    cat_resp = client.post("/api/v1/categories", json={"name": "Cat"})
+    cat_resp = client.post("/api/v1/materials/categories", json={"name": "Cat"})
     cat_id = cat_resp.json()["id"]
 
     listing_data = {
@@ -30,6 +30,6 @@ def test_create_listing(client):
         "available_quantity": 500.0,
         "quantity_unit": "kg"
     }
-    response = client.post("/api/v1/listings", json=listing_data)
+    response = client.post("/api/v1/materials/listings", json=listing_data)
     assert response.status_code == 201
     assert response.json()["material_description"] == "Clean PET Bottles"

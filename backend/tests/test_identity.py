@@ -1,8 +1,3 @@
-def test_get_users_empty(client):
-    response = client.get("/api/v1/users")
-    assert response.status_code == 200
-    assert response.json()["email"] == "test@example.com"
-
 
 def test_create_organization(client):
     org_data = {

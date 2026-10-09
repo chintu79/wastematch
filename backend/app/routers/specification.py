@@ -16,10 +16,12 @@ def create_specification(spec: schemas.BuyerSpecificationCreate, db: Session = D
     db.refresh(db_spec)
     return db_spec
 
-@router.get("/", response_model=list[schemas.BuyerSpecificationResponse])
-def get_specifications(db: Session = Depends(get_tenant_db)):
-    return db.query(models.BuyerSpecification).all()
-
+@router.get("/", response_model=schemas.PaginatedResponse[schemas.BuyerSpecificationResponse])
+def get_specifications(db: Session = Depends(get_tenant_db), page: int = 1, size: int = 50):
+    query = db.query(models.BuyerSpecification)
+    total = query.count()
+    items = query.offset((page - 1) * size).limit(size).all()
+    return schemas.PaginatedResponse(data=items, total=total, page=page, size=size)
 @router.get("/{spec_id}", response_model=schemas.BuyerSpecificationResponse)
 def get_specification(spec_id: UUID, db: Session = Depends(get_tenant_db), current_user: models.User = Depends(get_current_user)):
     db_spec = db.query(models.BuyerSpecification).filter(models.BuyerSpecification.id == spec_id).first()

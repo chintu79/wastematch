@@ -110,7 +110,8 @@ def _queue_evaluation(db: Session, batch_id: UUID, spec_id: UUID) -> models.Matc
 
 @router.post("/evaluate", response_model=schemas.MatchEvaluationResponse, status_code=status.HTTP_202_ACCEPTED)
 @limiter.limit("10/minute")
-def evaluate_candidate(request: Request, match_request: schemas.MatchRequest, db: Session = Depends(get_tenant_db), current_user: models.User = Depends(get_current_user)):    batch = db.query(models.MaterialBatch).filter(models.MaterialBatch.id == match_request.material_batch_id).first()
+def evaluate_candidate(request: Request, match_request: schemas.MatchRequest, db: Session = Depends(get_tenant_db), current_user: models.User = Depends(get_current_user)):
+    batch = db.query(models.MaterialBatch).filter(models.MaterialBatch.id == match_request.material_batch_id).first()
     spec = db.query(models.BuyerSpecification).filter(models.BuyerSpecification.id == match_request.buyer_specification_id).first()
     
     if not batch or not spec:
@@ -129,49 +130,12 @@ def evaluate_candidate(request: Request, match_request: schemas.MatchRequest, db
     
     return db_eval
 
-@router.post("/discover", response_model=schemas.MatchDiscoveryResponse, status_code=status.HTTP_202_ACCEPTED)
-def discover_candidates(request: schemas.MatchDiscoveryRequest, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
-    """Pre-filter every batch against a specification's hard constraints in
-    SQL and queue Celery deep scoring only for the survivors (Issue #53)."""
-    spec = db.query(models.BuyerSpecification).filter(models.BuyerSpecification.id == request.buyer_specification_id).first()
-    if not spec:
-        raise HTTPException(status_code=404, detail="Specification not found")
-
-    batches_scanned = db.query(func.count(models.MaterialBatch.id)).scalar() or 0
-
-    candidate_query = build_candidate_query(spec.id)
-    candidates_found = db.execute(
-        select(func.count()).select_from(candidate_query.subquery())
-    ).scalar_one()
-    queued_batch_ids = list(db.scalars(candidate_query.limit(request.limit)).all())
-
-    evaluations = [
-        (_queue_evaluation(db, batch_id, spec.id), batch_id)
-        for batch_id in queued_batch_ids
-    ]
-    # Commit the pending records before dispatching so the worker can load
-    # them, then hand the pre-filtered candidates to Celery for the deep
-    # compatibility scoring.
-    db.commit()
-    for db_eval, batch_id in evaluations:
-        process_match_evaluation_async.delay(
-            str(db_eval.id),
-            str(batch_id),
-            str(spec.id)
-        )
-
-    return schemas.MatchDiscoveryResponse(
-        batches_scanned=batches_scanned,
-        candidates_found=candidates_found,
-        candidates_excluded=batches_scanned - candidates_found,
-        evaluations_queued=len(evaluations),
-        queued_batch_ids=[batch_id for _, batch_id in evaluations],
-    )
-
-@router.get("/", response_model=list[schemas.MatchEvaluationResponse])
-def get_matches(db: Session = Depends(get_tenant_db), current_user: models.User = Depends(get_current_user)):
-    return db.query(models.MatchEvaluation).all()
-
+@router.get("/", response_model=schemas.PaginatedResponse[schemas.MatchEvaluationResponse])
+def get_matches(db: Session = Depends(get_tenant_db), current_user: models.User = Depends(get_current_user), page: int = 1, size: int = 50):
+    query = db.query(models.MatchEvaluation)
+    total = query.count()
+    items = query.offset((page - 1) * size).limit(size).all()
+    return schemas.PaginatedResponse(data=items, total=total, page=page, size=size)
 @router.get("/{match_id}", response_model=schemas.MatchEvaluationResponse)
 def get_match(match_id: UUID, db: Session = Depends(get_tenant_db), current_user: models.User = Depends(get_current_user)):
     db_match = db.query(models.MatchEvaluation).filter(models.MatchEvaluation.id == match_id).first()
