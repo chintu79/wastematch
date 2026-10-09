@@ -5,3 +5,6 @@ alembic
 pydantic
 psycopg2-binary
 pytest
+python-jose[cryptography]
+passlib
+python-multipart
