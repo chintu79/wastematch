@@ -17,6 +17,12 @@ config = context.config
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
+# Take the database URL from the validated application settings instead of
+# the hardcoded alembic.ini value (Issue #38). Escape '%' for configparser.
+config.set_main_option(
+    "sqlalchemy.url", get_settings().DATABASE_URL.replace("%", "%%")
+)
+
 target_metadata = Base.metadata
 
 def run_migrations_offline() -> None:
