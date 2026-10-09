@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from typing import List
+from typing import List, Dict, Any
 from uuid import UUID
 import uuid
 
@@ -10,6 +10,44 @@ from ..auth import get_current_user
 
 router = APIRouter(prefix="/api/v1/matches", tags=["matching"])
 
+def evaluate_technical_constraints(db: Session, batch_id: UUID, spec_id: UUID):
+    measurements = db.query(models.BatchMeasurement).filter(models.BatchMeasurement.batch_id == batch_id).all()
+    constraints = db.query(models.SpecificationConstraint).filter(models.SpecificationConstraint.specification_id == spec_id).all()
+    
+    measurements_by_prop = {m.property_definition_id: m for m in measurements}
+    
+    failed_constraints = {}
+    missing_fields = {}
+    is_compatible = True
+    needs_treatment = False
+    
+    for constraint in constraints:
+        measurement = measurements_by_prop.get(constraint.property_definition_id)
+        if not measurement:
+            if constraint.missing_data_policy == models.MissingDataPolicy.HOLD:
+                is_compatible = False
+                missing_fields[str(constraint.property_definition_id)] = "Missing required measurement"
+            continue
+            
+        if constraint.constraint_type == models.ConstraintType.HARD_LIMIT:
+            val = measurement.numeric_value
+            if val is None:
+                continue
+            if constraint.lower_bound is not None and val < constraint.lower_bound:
+                is_compatible = False
+                failed_constraints[str(constraint.id)] = f"Value {val} below lower bound {constraint.lower_bound}"
+            if constraint.upper_bound is not None and val > constraint.upper_bound:
+                is_compatible = False
+                failed_constraints[str(constraint.id)] = f"Value {val} above upper bound {constraint.upper_bound}"
+    
+    status = models.TechnicalStatus.COMPATIBLE
+    if not is_compatible:
+        status = models.TechnicalStatus.INCOMPATIBLE
+    if missing_fields and is_compatible:
+        status = models.TechnicalStatus.MISSING_DATA
+        
+    return status, failed_constraints, missing_fields
+
 @router.post("/evaluate", response_model=schemas.MatchEvaluationResponse, status_code=status.HTTP_201_CREATED)
 def evaluate_candidate(match_request: schemas.MatchRequest, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
     batch = db.query(models.MaterialBatch).filter(models.MaterialBatch.id == match_request.material_batch_id).first()
@@ -18,18 +56,23 @@ def evaluate_candidate(match_request: schemas.MatchRequest, db: Session = Depend
     if not batch or not spec:
         raise HTTPException(status_code=404, detail="Batch or Specification not found")
 
-    # In a real implementation, candidate discovery and rule engine goes here
-    candidate_id = uuid.uuid4()
+    tech_status, failed, missing = evaluate_technical_constraints(db, batch.id, spec.id)
     
+    # Simple compatibility score mock logic based on constraints passed
+    score = 100.0 if tech_status == models.TechnicalStatus.COMPATIBLE else (50.0 if tech_status == models.TechnicalStatus.MISSING_DATA else 0.0)
+
+    candidate_id = uuid.uuid4()
     db_eval = models.MatchEvaluation(
         candidate_id=candidate_id,
         material_batch_id=match_request.material_batch_id,
         buyer_specification_id=match_request.buyer_specification_id,
-        technical_status=models.TechnicalStatus.COMPATIBLE,
-        compatibility_score=85.0,
-        ranking_score=90.0,
-        explanation={"reason": "Mocked successful match evaluation"},
-        matching_algorithm_version="1.0"
+        technical_status=tech_status,
+        compatibility_score=score,
+        ranking_score=score,
+        failed_constraints=failed,
+        missing_fields=missing,
+        explanation={"reason": "Evaluated against buyer specification constraints"},
+        matching_algorithm_version="1.1"
     )
     db.add(db_eval)
     db.commit()
@@ -37,7 +80,7 @@ def evaluate_candidate(match_request: schemas.MatchRequest, db: Session = Depend
     return db_eval
 
 @router.get("/", response_model=List[schemas.MatchEvaluationResponse])
-def get_matches(db: Session = Depends(get_db)):
+def get_matches(db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
     return db.query(models.MatchEvaluation).all()
 
 @router.get("/{match_id}", response_model=schemas.MatchEvaluationResponse)
