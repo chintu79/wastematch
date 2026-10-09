@@ -1,7 +1,6 @@
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 import redis.asyncio as redis
 import os
-import json
 import structlog
 import asyncio
 
