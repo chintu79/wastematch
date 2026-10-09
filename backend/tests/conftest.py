@@ -33,9 +33,17 @@ if SQLALCHEMY_DATABASE_URL.startswith("sqlite"):
             "CreateSpatialIndex",
             "DisableSpatialIndex",
             "InitSpatialMetaData",
+            "GeomFromEWKT",
+            "ST_GeomFromEWKT",
+            "GeomFromText",
+            "ST_GeomFromText",
+            "AsEWKB",
+            "ST_AsEWKB",
+            "CheckSpatialIndex",
+            "DropSpatialIndex",
         ]:
             with contextlib.suppress(Exception):
-                dbapi_connection.create_function(fn, -1, lambda *args: 1)
+                dbapi_connection.create_function(fn, -1, lambda *args: None)
 else:
     engine = create_engine(SQLALCHEMY_DATABASE_URL)
 

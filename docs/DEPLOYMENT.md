@@ -376,8 +376,11 @@ Long-running tasks should use a durable queue or equivalent reliable job mechani
 
 Examples:
 
-- Large match evaluations.
+- Large match evaluations (`process_match_evaluation_async`).
 - Bulk imports.
+- Data lifecycle soft-deletion enforcement (`enforce_retention_policies`).
+- Data Lake Parquet archival (`archive_completed_batches_to_data_lake`) scheduled daily via Celery Beat.
+- PostgreSQL date-range partition maintenance (`maintain_database_partitions`) scheduled weekly via Celery Beat.
 - Document scanning.
 - Evidence processing.
 - Notifications.

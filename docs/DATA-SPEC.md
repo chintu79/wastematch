@@ -622,7 +622,7 @@ Actual access rules must be agreed with participating organizations.
 
 All access restrictions must be enforced by the backend, not merely by hiding fields in the interface.
 
-# 15. Data Retention and Versioning
+# 15. Data Retention, Table Partitioning, and Archival Strategy (Issue #68)
 
 - Material category definitions must be versioned.
 - Property definitions must be versioned.
@@ -631,7 +631,20 @@ All access restrictions must be enforced by the backend, not merely by hiding fi
 - Measurements must not be silently overwritten.
 - Match evaluations must retain their input and rule references.
 - Documents must preserve relevant historical versions.
-- Audit events must follow the approved retention policy.
+- Audit events and tracking logs must follow approved retention policies.
+
+### 15.1 PostgreSQL Table Partitioning (Date-Range)
+To satisfy the 7+ year legal retention mandate for industrial and hazardous waste tracking records without inflating the hot transactional database, `waste_tracking_logs` is natively partitioned by `RANGE (created_at)`:
+- **Partition Granularity**: Yearly partitions (`waste_tracking_logs_y{YYYY}`) pre-created for 7+ years ahead.
+- **Default Fallback Partition**: Catch-all partition (`waste_tracking_logs_default`) ensures unforeseen dates never cause INSERT failures.
+- **Query Isolation**: Historical queries isolate scans to specific yearly partitions via partition pruning, preserving indexed query performance for live transactions.
+
+### 15.2 S3 Data Lake Parquet Archival Strategy
+Aged, completed, or consumed material batches (`MaterialBatch`) are offloaded to an S3 Data Lake:
+- **Format**: Columnar Apache Parquet with snappy compression via PyArrow.
+- **S3 Path Convention**: `s3://<bucket>/data-lake/material_batches/year=<YYYY>/month=<MM>/batch_archive_<timestamp>_<uuid>.parquet`
+- **Database Status**: Offloaded batches are tagged with `is_archived = true`, `batch_status = ARCHIVED`, `archived_at`, and `archive_s3_uri`, keeping the hot active dataset lean.
+- **Compliance Auditability**: Each archival offload writes an immutable record to the partitioned `waste_tracking_logs` table.
 
 Retention and deletion requirements must be reviewed against applicable law, contractual obligations, and operational needs.
 

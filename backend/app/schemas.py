@@ -127,6 +127,9 @@ class MaterialBatchResponse(MaterialBatchBase):
     id: UUID
     listing_id: UUID
     batch_status: BatchStatus
+    is_archived: bool = False
+    archived_at: datetime | None = None
+    archive_s3_uri: str | None = None
     created_at: datetime
 
     class Config:
@@ -366,3 +369,39 @@ class DocumentAccessResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class WasteTrackingLogBase(BaseModel):
+    batch_id: Optional[UUID] = None
+    listing_id: Optional[UUID] = None
+    organization_id: Optional[UUID] = None
+    facility_id: Optional[UUID] = None
+    event_type: str
+    summary: str
+    payload: dict[str, Any] = {}
+
+
+class WasteTrackingLogCreate(WasteTrackingLogBase):
+    pass
+
+
+class WasteTrackingLogResponse(WasteTrackingLogBase):
+    id: UUID
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class BatchArchivalRequest(BaseModel):
+    batch_ids: Optional[list[UUID]] = None
+    cutoff_days: Optional[int] = None
+    dry_run: bool = False
+
+
+class BatchArchivalResult(BaseModel):
+    archived_count: int
+    s3_uri: Optional[str] = None
+    records_archived: list[dict[str, Any]] = []
+    status: str
+    message: str

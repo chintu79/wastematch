@@ -2,8 +2,8 @@ import enum
 import uuid
 from datetime import datetime
 
-from sqlalchemy import JSON, Column, DateTime, Boolean, Enum, Float, ForeignKey, Integer, String
-from sqlalchemy.dialects.postgresql import UUID, JSONB
+from sqlalchemy import JSON, Boolean, Column, DateTime, Enum, Float, ForeignKey, Integer, PrimaryKeyConstraint, String
+from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import relationship
 
 from .database import Base
@@ -91,6 +91,7 @@ class BatchStatus(enum.Enum):
     AVAILABLE = "AVAILABLE"
     RESERVED = "RESERVED"
     CONSUMED = "CONSUMED"
+    ARCHIVED = "ARCHIVED"
 
 class DataType(enum.Enum):
     NUMERIC = "NUMERIC"
@@ -142,6 +143,9 @@ class MaterialBatch(Base):
     sampled_at = Column(DateTime, nullable=True)
     batch_status = Column(Enum(BatchStatus), default=BatchStatus.AVAILABLE)
     properties = Column(JSON().with_variant(JSONB, 'postgresql'), default=dict)
+    is_archived = Column(Boolean, default=False, index=True)
+    archived_at = Column(DateTime, nullable=True)
+    archive_s3_uri = Column(String, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 
 class PropertyDefinition(Base):
@@ -356,4 +360,24 @@ class DocumentAccess(Base):
     expires_at = Column(DateTime, nullable=True)
     is_revoked = Column(Boolean, default=False)
     revoked_at = Column(DateTime, nullable=True)
+
+
+class WasteTrackingLog(Base):
+    """Historical waste tracking log partitioned by date for 7+ year compliance retention (Issue #68)."""
+
+    __tablename__ = "waste_tracking_logs"
+    __table_args__ = (
+        PrimaryKeyConstraint("id", "created_at"),
+        {"postgresql_partition_by": "RANGE (created_at)"},
+    )
+
+    id = Column(UUID(as_uuid=True), default=uuid.uuid4, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
+    batch_id = Column(UUID(as_uuid=True), nullable=True, index=True)
+    listing_id = Column(UUID(as_uuid=True), nullable=True)
+    organization_id = Column(UUID(as_uuid=True), nullable=True, index=True)
+    facility_id = Column(UUID(as_uuid=True), nullable=True)
+    event_type = Column(String, nullable=False, index=True)
+    summary = Column(String, nullable=False)
+    payload = Column(JSON().with_variant(JSONB, "postgresql"), default=dict)
 
