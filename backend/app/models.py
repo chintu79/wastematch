@@ -2,17 +2,7 @@ import enum
 import uuid
 from datetime import datetime
 
-from sqlalchemy import (
-    JSON,
-    Boolean,
-    Column,
-    DateTime,
-    Enum,
-    Float,
-    ForeignKey,
-    Integer,
-    String,
-)
+from sqlalchemy import JSON, Column, DateTime, Boolean, Enum, Float, ForeignKey, Integer, String
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 
@@ -231,6 +221,7 @@ class RegulatoryEvaluation(Base):
     reviewer_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
     review_status = Column(Enum(EvaluationReviewStatus), default=EvaluationReviewStatus.PENDING_REVIEW)
 
+from sqlalchemy import Boolean
 
 
 class SpecificationStatus(enum.Enum):
