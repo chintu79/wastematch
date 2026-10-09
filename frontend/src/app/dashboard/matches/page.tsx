@@ -43,12 +43,9 @@ import {
   List,
 } from 'lucide-react';
 
-const STATUS_BADGE: Record<TechnicalStatus, { variant: BadgeVariant; label: string }> = {
-  COMPATIBLE: { variant: 'eligible', label: 'Compatible' },
-  NEEDS_TREATMENT: { variant: 'on_hold', label: 'Needs Treatment' },
-  INCOMPATIBLE: { variant: 'ineligible', label: 'Incompatible' },
-  MISSING_DATA: { variant: 'pending', label: 'Missing Data' },
-};
+import { StatusBadge } from '@/components/marketplace/StatusBadge';
+import { EmptyState } from '@/components/marketplace/EmptyState';
+import { Skeleton } from '@/components/marketplace/Skeleton';
 
 const PRODUCER_ORGS = [
   { id: 'org-prod-001', name: 'Tata AutoComp Systems Ltd' },
@@ -392,16 +389,17 @@ export default function MatchesPage() {
         </CardHeader>
 
         {isLoading ? (
-          <div className="p-12 text-center text-xs text-slate-500">Loading evaluations...</div>
-        ) : filteredMatches.length === 0 ? (
-          <div className="p-12 text-center">
-            <Sparkles className="h-10 w-10 text-slate-300 mx-auto mb-3" />
-            <h3 className="text-sm font-semibold text-slate-800">No matching evaluations found</h3>
-            <p className="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
-              Try adjusting the verdict filter or search query. New evaluations appear here once
-              the matching engine runs against published listings.
-            </p>
+          <div className="p-6 space-y-4">
+            {[1, 2, 3].map(i => <Skeleton key={i} className="h-16 w-full" />)}
           </div>
+        ) : filteredMatches.length === 0 ? (
+          <EmptyState
+            icon={Sparkles}
+            title="No matching evaluations found"
+            description="Try adjusting the verdict filter or search query. New evaluations appear here once the matching engine runs against published listings."
+            actionLabel="Clear Filters"
+            actionOnClick={() => { setStatusFilter('ALL'); setSearchQuery(''); }}
+          />
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs text-slate-700">
@@ -418,7 +416,7 @@ export default function MatchesPage() {
                 {filteredMatches.map((match) => {
                   const batch = getBatchLabel(match.material_batch_id);
                   const spec = getSpecLabel(match.buyer_specification_id);
-                  const badge = STATUS_BADGE[match.technical_status];
+                  
                   const isExpanded = expandedId === match.id;
                   const hasInquiryForm = inquiryFor === match.id;
 
@@ -443,7 +441,7 @@ export default function MatchesPage() {
                           </div>
                         </td>
                         <td className="px-4 py-4">
-                          <Badge variant={badge.variant}>{badge.label}</Badge>
+                          <StatusBadge type="technical" status={match.technical_status} />
                         </td>
                         <td className="px-4 py-4">
                           {match.compatibility_score != null ? (
@@ -510,7 +508,7 @@ export default function MatchesPage() {
                               }}
                             >
                               <Send className="h-3 w-3 mr-1" />
-                              Send Inquiry
+                              Request info
                             </Button>
                           </div>
                         </td>
@@ -522,7 +520,7 @@ export default function MatchesPage() {
                           <td colSpan={5} className="px-6 py-4">
                             <div className="rounded-lg border border-slate-200 bg-white p-4 max-w-2xl">
                               <h4 className="text-xs font-bold text-slate-900 mb-3">
-                                Open an inquiry for this match
+                                Request information
                               </h4>
                               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                 <div>
@@ -558,7 +556,7 @@ export default function MatchesPage() {
                                   onClick={() => handleSendInquiry(match)}
                                 >
                                   <Send className="h-3 w-3" />
-                                  Send Inquiry
+                                  Request info
                                 </Button>
                                 <Button
                                   variant="ghost"

@@ -85,7 +85,7 @@ export default function InteractiveMap({ matches, getBatchLabel, getSpecLabel, o
                       size="sm" 
                       className="w-full text-xs h-7"
                     >
-                      Send Inquiry
+                      Request info
                     </Button>
                   </div>
                 </Popup>
