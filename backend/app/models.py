@@ -270,6 +270,7 @@ class SpecificationConstraint(Base):
     tolerance_policy = Column(JSON, nullable=True)
 
 class TechnicalStatus(enum.Enum):
+    PENDING = "PENDING"
     COMPATIBLE = "COMPATIBLE"
     INCOMPATIBLE = "INCOMPATIBLE"
     NEEDS_TREATMENT = "NEEDS_TREATMENT"
