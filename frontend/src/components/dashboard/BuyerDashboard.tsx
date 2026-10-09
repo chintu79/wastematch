@@ -106,8 +106,11 @@ const CANDIDATE_MATCHES = [
   },
 ];
 
+import Link from 'next/link';
+import { getStoredSpecifications } from '@/lib/specificationData';
+
 export const BuyerDashboard: React.FC = () => {
-  const [showSpecNotice, setShowSpecNotice] = useState(false);
+  const [specs, setSpecs] = useState(() => getStoredSpecifications());
 
   return (
     <div className="space-y-6">
@@ -124,45 +127,20 @@ export const BuyerDashboard: React.FC = () => {
         </div>
 
         <div className="flex items-center gap-2.5">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => alert('Search catalog opens in marketplace discovery mode.')}
-          >
-            <Search className="h-4 w-4" />
-            <span>Search Feedstocks</span>
-          </Button>
-          <Button
-            variant="primary"
-            size="sm"
-            onClick={() => setShowSpecNotice(true)}
-          >
-            <PlusCircle className="h-4 w-4" />
-            <span>Create Buyer Spec</span>
-          </Button>
+          <Link href="/dashboard/specifications">
+            <Button variant="outline" size="sm">
+              <SlidersHorizontal className="h-4 w-4" />
+              <span>All Specifications</span>
+            </Button>
+          </Link>
+          <Link href="/dashboard/specifications/new">
+            <Button variant="primary" size="sm">
+              <PlusCircle className="h-4 w-4" />
+              <span>Create Buyer Spec</span>
+            </Button>
+          </Link>
         </div>
       </div>
-
-      {showSpecNotice && (
-        <div className="rounded-xl border border-blue-300 bg-blue-50/90 p-4 text-blue-950 flex items-start justify-between shadow-xs">
-          <div className="flex gap-3">
-            <Sparkles className="h-5 w-5 text-blue-700 mt-0.5 shrink-0" />
-            <div>
-              <p className="text-xs font-bold text-blue-900">Next Step: Issue #11 Buyer Specification Builder</p>
-              <p className="text-xs text-blue-800 mt-0.5">
-                The constraint builder (Hard limits vs. Preferred tolerances, Prohibited contaminants, and geographic radii) is scheduled under <strong>#11 [Frontend] Build Buyer Specification UI</strong>.
-              </p>
-            </div>
-          </div>
-          <button
-            type="button"
-            onClick={() => setShowSpecNotice(false)}
-            className="text-xs font-semibold text-blue-800 hover:text-blue-950 underline cursor-pointer"
-          >
-            Dismiss
-          </button>
-        </div>
-      )}
 
       {/* KPI Cards */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -262,10 +240,19 @@ export const BuyerDashboard: React.FC = () => {
               Your defined material tolerances and automated matching criteria
             </CardDescription>
           </div>
-          <Button variant="outline" size="sm" onClick={() => setShowSpecNotice(true)}>
-            <PlusCircle className="h-4 w-4" />
-            <span>Add Spec</span>
-          </Button>
+          <div className="flex items-center gap-2">
+            <Link href="/dashboard/specifications">
+              <Button variant="ghost" size="sm" className="text-xs">
+                View All
+              </Button>
+            </Link>
+            <Link href="/dashboard/specifications/new">
+              <Button variant="outline" size="sm">
+                <PlusCircle className="h-4 w-4" />
+                <span>Add Spec</span>
+              </Button>
+            </Link>
+          </div>
         </CardHeader>
 
         <div className="overflow-x-auto">
@@ -281,15 +268,15 @@ export const BuyerDashboard: React.FC = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {SPECIFICATIONS.map((spec) => (
+              {specs.map((spec) => (
                 <tr key={spec.id} className="hover:bg-slate-50/60 transition-colors">
                   <td className="px-6 py-4">
-                    <p className="font-semibold text-slate-900">{spec.target_material}</p>
-                    <p className="text-[11px] text-slate-500 mt-0.5">{spec.intended_application}</p>
+                    <p className="font-semibold text-slate-900">{spec.target_material_name}</p>
+                    <p className="text-[11px] text-slate-500 mt-0.5">{spec.intended_use}</p>
                   </td>
                   <td className="px-4 py-4">
                     <span className="font-bold text-slate-900">
-                      {spec.required_volume} {spec.unit}
+                      {spec.minimum_quantity} {spec.quantity_unit}
                     </span>
                   </td>
                   <td className="px-4 py-4">
@@ -301,16 +288,20 @@ export const BuyerDashboard: React.FC = () => {
                   <td className="px-4 py-4">
                     <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-semibold text-emerald-800 border border-emerald-200">
                       <Sparkles className="h-3 w-3" />
-                      {spec.matched_listings_count} Qualified Matches
+                      {spec.matched_listings_count || 0} Qualified Matches
                     </span>
                   </td>
                   <td className="px-4 py-4">
-                    <Badge variant="eligible">Active Monitoring</Badge>
+                    <Badge variant={spec.specification_status === 'published' ? 'published' : 'draft'}>
+                      {spec.specification_status === 'published' ? 'Active Monitoring' : 'Draft Spec'}
+                    </Badge>
                   </td>
                   <td className="px-6 py-4 text-right">
-                    <Button variant="outline" size="sm">
-                      Inspect Criteria
-                    </Button>
+                    <Link href={`/dashboard/specifications/${spec.id}`}>
+                      <Button variant="outline" size="sm">
+                        Inspect Criteria
+                      </Button>
+                    </Link>
                   </td>
                 </tr>
               ))}

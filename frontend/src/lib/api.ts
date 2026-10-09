@@ -198,3 +198,19 @@ export async function apiRequest<T>(
     throw err;
   }
 }
+
+export const specificationsApi = {
+  list: async () => apiRequest<any[]>('/specifications/'),
+  getById: async (id: string) => apiRequest<any>(`/specifications/${id}`),
+  create: async (payload: any) =>
+    apiRequest<any>('/specifications/', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+  createConstraint: async (specId: string, payload: any) =>
+    apiRequest<any>(`/specifications/${specId}/constraints`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+};
+
