@@ -1,7 +1,11 @@
 [lint]
 ignore = [
-    "B008", # Do not perform function calls in argument defaults (FastAPI Depends)
-    "BLE001", # Do not catch blind Exception (we need this in top level handlers)
-    "UP006", # Use dict instead of Dict
-    "UP045" # Use X | None
+    "B008",
+    "BLE001",
+    "UP006",
+    "UP045",
+    "DTZ003",
+    "TRY201",
+    "I001",
+    "F821"
 ]

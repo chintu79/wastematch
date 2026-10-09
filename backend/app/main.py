@@ -35,7 +35,7 @@ logger = structlog.get_logger()
 # Create tables for now (will be replaced by Alembic later)
 # Base.metadata.create_all(bind=engine)  # Commented out due to Alembic transition
 
-app = FastAPI(title="WasteMatch API", version="1.0", lifespan=lifespan)
+app = FastAPI(title="WasteMatch API", version="1.0")
 
 # Add Middlewares
 app.add_middleware(CorrelationIdMiddleware)
