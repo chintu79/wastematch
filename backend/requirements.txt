@@ -8,3 +8,4 @@ pytest
 python-jose[cryptography]
 passlib
 python-multipart
+boto3

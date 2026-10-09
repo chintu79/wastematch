@@ -1,7 +1,11 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File
 from sqlalchemy.orm import Session
-from typing import List
+from typing import List, Dict, Any
 from uuid import UUID
+import uuid
+import os
+import boto3
+from botocore.exceptions import NoCredentialsError, ClientError
 
 from .. import models, schemas
 from ..database import get_db
@@ -9,8 +13,89 @@ from ..auth import get_current_user
 
 router = APIRouter(prefix="/api/v1/documents", tags=["documents"])
 
+AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID", "mock-access-key")
+AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY", "mock-secret-key")
+AWS_REGION = os.getenv("AWS_REGION", "us-east-1")
+S3_BUCKET_NAME = os.getenv("S3_BUCKET_NAME", "wastematch-documents-dev")
+
+s3_client = boto3.client(
+    's3',
+    region_name=AWS_REGION,
+    aws_access_key_id=AWS_ACCESS_KEY_ID,
+    aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
+    endpoint_url=os.getenv("S3_ENDPOINT_URL") # Useful for MinIO/Localstack
+)
+
+@router.post("/presigned-url", status_code=status.HTTP_200_OK)
+def generate_presigned_url(filename: str, content_type: str, current_user: models.User = Depends(get_current_user)):
+    """
+    Generate a pre-signed POST URL to allow the frontend to upload a file directly to S3.
+    """
+    # Create a unique S3 key using UUID to prevent collisions
+    file_extension = filename.split(".")[-1] if "." in filename else ""
+    unique_filename = f"{uuid.uuid4()}.{file_extension}"
+    s3_key = f"uploads/{current_user.id}/{unique_filename}"
+
+    try:
+        presigned_post = s3_client.generate_presigned_post(
+            Bucket=S3_BUCKET_NAME,
+            Key=s3_key,
+            Fields={"Content-Type": content_type},
+            Conditions=[
+                {"Content-Type": content_type},
+                ["content-length-range", 1, 10485760] # 10MB limit
+            ],
+            ExpiresIn=3600 # 1 hour
+        )
+        return {"presigned_post": presigned_post, "s3_key": s3_key}
+    except ClientError as e:
+        raise HTTPException(status_code=500, detail="Could not generate presigned URL")
+
+@router.post("/direct-upload", response_model=schemas.DocumentResponse, status_code=status.HTTP_201_CREATED)
+def upload_file_direct(
+    document_type: models.DocumentType,
+    owner_organization_id: UUID,
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    """
+    Fallback endpoint to upload a file directly through the FastAPI server to S3.
+    """
+    file_extension = file.filename.split(".")[-1] if "." in file.filename else ""
+    unique_filename = f"{uuid.uuid4()}.{file_extension}"
+    s3_key = f"uploads/{current_user.id}/{unique_filename}"
+    
+    try:
+        s3_client.upload_fileobj(
+            file.file,
+            S3_BUCKET_NAME,
+            s3_key,
+            ExtraArgs={"ContentType": file.content_type}
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="File upload to S3 failed")
+    
+    # Save metadata to database
+    db_doc = models.Document(
+        owner_organization_id=owner_organization_id,
+        document_type=document_type,
+        s3_key=s3_key,
+        original_filename=file.filename,
+        file_size=file.size or 0,
+        content_type=file.content_type,
+        document_status=models.DocumentStatus.ACTIVE
+    )
+    db.add(db_doc)
+    db.commit()
+    db.refresh(db_doc)
+    return db_doc
+
 @router.post("/", response_model=schemas.DocumentResponse, status_code=status.HTTP_201_CREATED)
 def upload_document_metadata(doc: schemas.DocumentCreate, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
+    """
+    Register document metadata after a successful frontend direct-to-S3 upload using the presigned URL.
+    """
     db_doc = models.Document(**doc.model_dump())
     db.add(db_doc)
     db.commit()
