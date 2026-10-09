@@ -1,11 +1,12 @@
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Request
 from sqlalchemy.orm import Session
 
 from .. import models, schemas
 from ..auth import get_current_user
 from ..database import get_db
+from ..limiter import limiter
 
 router = APIRouter(prefix="/api/v1/materials", tags=["catalog"])
 
@@ -30,7 +31,8 @@ def create_listing(listing: schemas.MaterialListingCreate, db: Session = Depends
     return new_listing
 
 @router.get("/listings", response_model=list[schemas.MaterialListingResponse])
-def get_listings(db: Session = Depends(get_db)):
+@limiter.limit("60/minute")
+def get_listings(request: Request, db: Session = Depends(get_db)):
     return db.query(models.MaterialListing).all()
 
 @router.get("/listings/{listing_id}", response_model=schemas.MaterialListingResponse)

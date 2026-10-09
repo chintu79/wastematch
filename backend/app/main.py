@@ -36,7 +36,13 @@ logger = structlog.get_logger()
 # Create tables for now (will be replaced by Alembic later)
 # Base.metadata.create_all(bind=engine)  # Commented out due to Alembic transition
 
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
+from .limiter import limiter
+
 app = FastAPI(title="WasteMatch API", version="1.0")
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 # Add Middlewares
 app.add_middleware(CorrelationIdMiddleware)
