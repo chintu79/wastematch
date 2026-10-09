@@ -11,3 +11,7 @@ python-jose[cryptography]
 passlib
 python-multipart
 boto3
+structlog
+asgi-correlation-id
+celery
+redis

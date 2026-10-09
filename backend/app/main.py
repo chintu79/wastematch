@@ -1,31 +1,64 @@
-import logging
-from contextlib import asynccontextmanager
+import time
 
-from fastapi import FastAPI
+import structlog
+from asgi_correlation_id import CorrelationIdMiddleware, correlation_id
+from fastapi import FastAPI, Request
 
-from .config import get_settings
+from .routers import (
+    catalog,
+    documents,
+    health,
+    identity,
+    inquiries,
+    matching,
+    regulatory,
+    specification,
+)
 
-# Load and validate configuration at import time so the application fails
-# fast on missing or invalid environment variables (Issue #38).
-settings = get_settings()
+# Configure structlog
+structlog.configure(
+    processors=[
+        structlog.contextvars.merge_contextvars,
+        structlog.stdlib.filter_by_level,
+        structlog.stdlib.add_logger_name,
+        structlog.stdlib.add_log_level,
+        structlog.processors.TimeStamper(fmt="iso"),
+        structlog.processors.JSONRenderer()
+    ],
+    wrapper_class=structlog.stdlib.BoundLogger,
+    logger_factory=structlog.stdlib.LoggerFactory(),
+    cache_logger_on_first_use=True,
+)
 
-from .database import engine, Base  # noqa: E402  (depends on validated settings)
-from .routers import identity, catalog, regulatory, specification, matching, inquiries, documents  # noqa: E402
+logger = structlog.get_logger()
 
-
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    logging.basicConfig(level=settings.LOG_LEVEL)
-    logging.getLogger(__name__).info(
-        "Configuration validated (environment=%s, log_level=%s)",
-        settings.ENVIRONMENT,
-        settings.LOG_LEVEL,
-    )
-    yield
-
+# Create tables for now (will be replaced by Alembic later)
+# Base.metadata.create_all(bind=engine)  # Commented out due to Alembic transition
 
 app = FastAPI(title="WasteMatch API", version="1.0", lifespan=lifespan)
 
+# Add Middlewares
+app.add_middleware(CorrelationIdMiddleware)
+
+@app.middleware("http")
+async def logging_middleware(request: Request, call_next):
+    req_id = correlation_id.get()
+    structlog.contextvars.clear_contextvars()
+    structlog.contextvars.bind_contextvars(request_id=req_id, method=request.method, path=request.url.path)
+    
+    start_time = time.perf_counter()
+    try:
+        response = await call_next(request)
+        process_time = time.perf_counter() - start_time
+        
+        logger.info("request_completed", status_code=response.status_code, duration_seconds=round(process_time, 4))
+        return response
+    except Exception as e:
+        process_time = time.perf_counter() - start_time
+        logger.error("request_failed", error=str(e), duration_seconds=round(process_time, 4))
+        raise
+
+app.include_router(health.router)
 app.include_router(identity.router)
 app.include_router(catalog.router)
 app.include_router(regulatory.router)
@@ -36,4 +69,5 @@ app.include_router(documents.router)
 
 @app.get("/")
 def read_root():
+    logger.info("root_accessed")
     return {"message": "Welcome to the WasteMatch API"}

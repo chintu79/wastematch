@@ -1,13 +1,16 @@
-from pydantic import BaseModel, EmailStr
-from typing import Optional, Dict, Any, List
 from datetime import datetime
+from typing import Any
 from uuid import UUID
-from .models import AccountStatus, OrgType, VerificationStatus, FacilityStatus
+
+from pydantic import BaseModel, EmailStr
+
+from .models import AccountStatus, FacilityStatus, OrgType, VerificationStatus
+
 
 class UserBase(BaseModel):
     email: EmailStr
     full_name: str
-    identity_provider_id: Optional[str] = None
+    identity_provider_id: str | None = None
 
 class UserCreate(UserBase):
     pass
@@ -23,11 +26,11 @@ class UserResponse(UserBase):
 
 class FacilityBase(BaseModel):
     name: str
-    address: Optional[Dict[str, Any]] = None
-    latitude: Optional[float] = None
-    longitude: Optional[float] = None
-    jurisdiction: Optional[str] = None
-    industrial_estate: Optional[str] = None
+    address: dict[str, Any] | None = None
+    latitude: float | None = None
+    longitude: float | None = None
+    jurisdiction: str | None = None
+    industrial_estate: str | None = None
 
 class FacilityCreate(FacilityBase):
     organization_id: UUID
@@ -43,8 +46,8 @@ class FacilityResponse(FacilityBase):
 class OrganizationBase(BaseModel):
     legal_name: str
     organization_type: OrgType
-    registered_address: Optional[Dict[str, Any]] = None
-    contact_details: Optional[Dict[str, Any]] = None
+    registered_address: dict[str, Any] | None = None
+    contact_details: dict[str, Any] | None = None
 
 class OrganizationCreate(OrganizationBase):
     pass
@@ -54,18 +57,25 @@ class OrganizationResponse(OrganizationBase):
     verification_status: VerificationStatus
     created_at: datetime
     updated_at: datetime
-    facilities: List[FacilityResponse] = []
+    facilities: list[FacilityResponse] = []
 
     class Config:
         from_attributes = True
 
-from .models import CategoryStatus, ListingStatus, BatchStatus, DataType, MeasurementVerificationStatus
+from .models import (
+    BatchStatus,
+    CategoryStatus,
+    DataType,
+    ListingStatus,
+    MeasurementVerificationStatus,
+)
+
 
 class MaterialCategoryBase(BaseModel):
     code: str
     name: str
-    parent_category_id: Optional[UUID] = None
-    description: Optional[str] = None
+    parent_category_id: UUID | None = None
+    description: str | None = None
     category_status: CategoryStatus = CategoryStatus.ACTIVE
 
 class MaterialCategoryCreate(MaterialCategoryBase):
@@ -82,9 +92,9 @@ class MaterialListingBase(BaseModel):
     source_process: str
     available_quantity: float
     quantity_unit: str
-    availability_start: Optional[datetime] = None
-    availability_end: Optional[datetime] = None
-    location_visibility: Optional[str] = None
+    availability_start: datetime | None = None
+    availability_end: datetime | None = None
+    location_visibility: str | None = None
 
 class MaterialListingCreate(MaterialListingBase):
     producer_organization_id: UUID
@@ -107,8 +117,8 @@ class MaterialBatchBase(BaseModel):
     batch_reference: str
     quantity: float
     quantity_unit: str
-    generated_at: Optional[datetime] = None
-    sampled_at: Optional[datetime] = None
+    generated_at: datetime | None = None
+    sampled_at: datetime | None = None
 
 class MaterialBatchCreate(MaterialBatchBase):
     listing_id: UUID
@@ -126,9 +136,9 @@ class PropertyDefinitionBase(BaseModel):
     code: str
     name: str
     data_type: DataType
-    canonical_unit: Optional[str] = None
-    measurement_basis_options: Optional[Dict[str, Any]] = None
-    validation_schema: Optional[Dict[str, Any]] = None
+    canonical_unit: str | None = None
+    measurement_basis_options: dict[str, Any] | None = None
+    validation_schema: dict[str, Any] | None = None
     active: int = 1
 
 class PropertyDefinitionCreate(PropertyDefinitionBase):
@@ -142,33 +152,39 @@ class PropertyDefinitionResponse(PropertyDefinitionBase):
         from_attributes = True
 
 class BatchMeasurementBase(BaseModel):
-    numeric_value: Optional[float] = None
-    text_value: Optional[str] = None
+    numeric_value: float | None = None
+    text_value: str | None = None
     unit: str
-    measurement_basis: Optional[str] = None
-    measurement_method: Optional[str] = None
-    sample_reference: Optional[str] = None
-    measured_at: Optional[datetime] = None
+    measurement_basis: str | None = None
+    measurement_method: str | None = None
+    sample_reference: str | None = None
+    measured_at: datetime | None = None
 
 class BatchMeasurementCreate(BatchMeasurementBase):
     batch_id: UUID
     property_definition_id: UUID
-    reported_by_organization_id: Optional[UUID] = None
-    evidence_document_id: Optional[UUID] = None
+    reported_by_organization_id: UUID | None = None
+    evidence_document_id: UUID | None = None
 
 class BatchMeasurementResponse(BatchMeasurementBase):
     id: UUID
     batch_id: UUID
     property_definition_id: UUID
-    reported_by_organization_id: Optional[UUID] = None
-    evidence_document_id: Optional[UUID] = None
+    reported_by_organization_id: UUID | None = None
+    evidence_document_id: UUID | None = None
     verification_status: MeasurementVerificationStatus
     created_at: datetime
 
     class Config:
         from_attributes = True
 
-from .models import JurisdictionLevel, RuleReviewStatus, EligibilityStatus, EvaluationReviewStatus
+from .models import (
+    EligibilityStatus,
+    EvaluationReviewStatus,
+    JurisdictionLevel,
+    RuleReviewStatus,
+)
+
 
 class RegulatoryRuleBase(BaseModel):
     rule_code: str
@@ -176,11 +192,11 @@ class RegulatoryRuleBase(BaseModel):
     legal_instrument: str
     legal_clause_reference: str
     jurisdiction_level: JurisdictionLevel
-    applicability_definition: Dict[str, Any]
-    required_conditions: Dict[str, Any]
+    applicability_definition: dict[str, Any]
+    required_conditions: dict[str, Any]
     effective_from: datetime
-    effective_until: Optional[datetime] = None
-    source_reference: Optional[str] = None
+    effective_until: datetime | None = None
+    source_reference: str | None = None
 
 class RegulatoryRuleCreate(RegulatoryRuleBase):
     pass
@@ -188,8 +204,8 @@ class RegulatoryRuleCreate(RegulatoryRuleBase):
 class RegulatoryRuleResponse(RegulatoryRuleBase):
     id: UUID
     review_status: RuleReviewStatus
-    reviewed_by: Optional[UUID] = None
-    reviewed_at: Optional[datetime] = None
+    reviewed_by: UUID | None = None
+    reviewed_at: datetime | None = None
     rule_version: int
 
     class Config:
@@ -198,9 +214,9 @@ class RegulatoryRuleResponse(RegulatoryRuleBase):
 class RegulatoryEvaluationBase(BaseModel):
     candidate_id: UUID
     rule_set_version: str
-    decision_reasons: Optional[Dict[str, Any]] = None
-    evidence_references: Optional[Dict[str, Any]] = None
-    unresolved_conditions: Optional[Dict[str, Any]] = None
+    decision_reasons: dict[str, Any] | None = None
+    evidence_references: dict[str, Any] | None = None
+    unresolved_conditions: dict[str, Any] | None = None
 
 class RegulatoryEvaluationCreate(RegulatoryEvaluationBase):
     pass
@@ -209,21 +225,22 @@ class RegulatoryEvaluationResponse(RegulatoryEvaluationBase):
     id: UUID
     eligibility_status: EligibilityStatus
     evaluated_at: datetime
-    reviewer_id: Optional[UUID] = None
+    reviewer_id: UUID | None = None
     review_status: EvaluationReviewStatus
 
     class Config:
         from_attributes = True
 
-from .models import SpecificationStatus, ConstraintType, MissingDataPolicy
+from .models import ConstraintType, MissingDataPolicy, SpecificationStatus
+
 
 class BuyerSpecificationBase(BaseModel):
     intended_use: str
-    minimum_quantity: Optional[float] = None
-    maximum_quantity: Optional[float] = None
-    quantity_unit: Optional[str] = None
+    minimum_quantity: float | None = None
+    maximum_quantity: float | None = None
+    quantity_unit: str | None = None
     effective_from: datetime
-    effective_until: Optional[datetime] = None
+    effective_until: datetime | None = None
 
 class BuyerSpecificationCreate(BuyerSpecificationBase):
     buyer_organization_id: UUID
@@ -244,12 +261,12 @@ class BuyerSpecificationResponse(BuyerSpecificationBase):
 
 class SpecificationConstraintBase(BaseModel):
     constraint_type: ConstraintType
-    lower_bound: Optional[float] = None
-    upper_bound: Optional[float] = None
+    lower_bound: float | None = None
+    upper_bound: float | None = None
     unit: str
     required_evidence: bool = True
     missing_data_policy: MissingDataPolicy
-    tolerance_policy: Optional[Dict[str, Any]] = None
+    tolerance_policy: dict[str, Any] | None = None
 
 class SpecificationConstraintCreate(SpecificationConstraintBase):
     specification_id: UUID
@@ -265,18 +282,19 @@ class SpecificationConstraintResponse(SpecificationConstraintBase):
 
 from .models import TechnicalStatus
 
+
 class MatchEvaluationBase(BaseModel):
     candidate_id: UUID
     material_batch_id: UUID
     buyer_specification_id: UUID
-    regulatory_evaluation_id: Optional[UUID] = None
+    regulatory_evaluation_id: UUID | None = None
     technical_status: TechnicalStatus
-    compatibility_score: Optional[float] = None
-    ranking_score: Optional[float] = None
-    missing_fields: Optional[Dict[str, Any]] = None
-    failed_constraints: Optional[Dict[str, Any]] = None
-    treatment_requirements: Optional[Dict[str, Any]] = None
-    explanation: Optional[Dict[str, Any]] = None
+    compatibility_score: float | None = None
+    ranking_score: float | None = None
+    missing_fields: dict[str, Any] | None = None
+    failed_constraints: dict[str, Any] | None = None
+    treatment_requirements: dict[str, Any] | None = None
+    explanation: dict[str, Any] | None = None
     matching_algorithm_version: str
 
 class MatchEvaluationCreate(MatchEvaluationBase):
@@ -293,13 +311,14 @@ class MatchRequest(BaseModel):
     material_batch_id: UUID
     buyer_specification_id: UUID
 
-from .models import InquiryStatus, SampleRequestStatus, DocumentType, DocumentStatus
+from .models import DocumentStatus, DocumentType, InquiryStatus, SampleRequestStatus
+
 
 class InquiryBase(BaseModel):
     match_id: UUID
     buyer_organization_id: UUID
     producer_organization_id: UUID
-    rejection_reason: Optional[str] = None
+    rejection_reason: str | None = None
 
 class InquiryCreate(InquiryBase):
     pass
@@ -316,7 +335,7 @@ class InquiryResponse(InquiryBase):
 class SampleRequestBase(BaseModel):
     quantity_requested: float
     quantity_unit: str
-    shipping_address: Dict[str, Any]
+    shipping_address: dict[str, Any]
 
 class SampleRequestCreate(SampleRequestBase):
     inquiry_id: UUID
@@ -337,7 +356,7 @@ class DocumentBase(BaseModel):
     original_filename: str
     file_size: int
     content_type: str
-    expires_at: Optional[datetime] = None
+    expires_at: datetime | None = None
 
 class DocumentCreate(DocumentBase):
     owner_organization_id: UUID
@@ -346,7 +365,26 @@ class DocumentResponse(DocumentBase):
     id: UUID
     owner_organization_id: UUID
     document_status: DocumentStatus
+    is_deleted: bool
     uploaded_at: datetime
+
+    class Config:
+        from_attributes = True
+
+class DocumentAccessCreate(BaseModel):
+    document_id: UUID
+    granted_to_organization_id: UUID
+    expires_at: Optional[datetime] = None
+
+class DocumentAccessResponse(BaseModel):
+    id: UUID
+    document_id: UUID
+    granted_to_organization_id: UUID
+    granted_by_user_id: UUID
+    granted_at: datetime
+    expires_at: Optional[datetime] = None
+    is_revoked: bool
+    revoked_at: Optional[datetime] = None
 
     class Config:
         from_attributes = True
