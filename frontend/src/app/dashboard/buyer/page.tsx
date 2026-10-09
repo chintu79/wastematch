@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import CompatibilityScoreCard from "@/components/dashboard/CompatibilityScoreCard";
+
 import { Search, Bookmark, Target, TrendingUp } from "lucide-react";
 
 export default function BuyerDashboard() {
@@ -68,24 +70,8 @@ export default function BuyerDashboard() {
                 </div>
               </div>
               
-              {/* Match Card */}
-              <div className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <div className="flex items-center space-x-2">
-                      <span className="bg-green-100 text-green-800 text-xs font-semibold px-2 py-1 rounded">98% Match</span>
-                      <h4 className="font-bold text-lg">High-Purity Copper Slag</h4>
-                    </div>
-                    <p className="text-gray-600 text-sm mt-1">Industrial Metals Corp • 45 miles away</p>
-                  </div>
-                  <button className="text-blue-600 hover:text-blue-800 text-sm font-medium">View Details &rarr;</button>
-                </div>
-                <div className="mt-4 grid grid-cols-3 gap-4 text-sm">
-                  <div><span className="text-gray-500">Volume:</span> <span className="font-medium">500 Tons</span></div>
-                  <div><span className="text-gray-500">Purity:</span> <span className="font-medium">99.2%</span></div>
-                  <div><span className="text-gray-500">Available:</span> <span className="font-medium">Immediate</span></div>
-                </div>
-              </div>
+              {/* Match Cards */}
+              <CompatibilityScoreCard />
             </div>
           )}
           {activeTab === 'specifications' && (
