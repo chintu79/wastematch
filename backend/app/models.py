@@ -262,3 +262,26 @@ class SpecificationConstraint(Base):
     required_evidence = Column(Boolean, default=True)
     missing_data_policy = Column(Enum(MissingDataPolicy), nullable=False)
     tolerance_policy = Column(JSON, nullable=True)
+
+class TechnicalStatus(enum.Enum):
+    COMPATIBLE = "COMPATIBLE"
+    INCOMPATIBLE = "INCOMPATIBLE"
+    NEEDS_TREATMENT = "NEEDS_TREATMENT"
+    MISSING_DATA = "MISSING_DATA"
+
+class MatchEvaluation(Base):
+    __tablename__ = "match_evaluations"
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
+    candidate_id = Column(UUID(as_uuid=True), unique=True, nullable=False)
+    material_batch_id = Column(UUID(as_uuid=True), ForeignKey("material_batches.id"), nullable=False)
+    buyer_specification_id = Column(UUID(as_uuid=True), ForeignKey("buyer_specifications.id"), nullable=False)
+    regulatory_evaluation_id = Column(UUID(as_uuid=True), ForeignKey("regulatory_evaluations.id"), nullable=True)
+    technical_status = Column(Enum(TechnicalStatus), nullable=False)
+    compatibility_score = Column(Float, nullable=True)
+    ranking_score = Column(Float, nullable=True)
+    missing_fields = Column(JSON, nullable=True)
+    failed_constraints = Column(JSON, nullable=True)
+    treatment_requirements = Column(JSON, nullable=True)
+    explanation = Column(JSON, nullable=True)
+    matching_algorithm_version = Column(String, nullable=False)
+    evaluated_at = Column(DateTime, default=datetime.utcnow)
