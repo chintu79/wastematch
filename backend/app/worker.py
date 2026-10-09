@@ -27,26 +27,32 @@ celery_app.conf.update(
 )
 
 def evaluate_technical_constraints(db: Session, batch_id: str, spec_id: str):
-    measurements = db.query(models.BatchMeasurement).filter(models.BatchMeasurement.batch_id == batch_id).all()
+    batch = db.query(models.MaterialBatch).filter(models.MaterialBatch.id == batch_id).first()
     constraints = db.query(models.SpecificationConstraint).filter(models.SpecificationConstraint.specification_id == spec_id).all()
     
-    measurements_by_prop = {m.property_definition_id: m for m in measurements}
+    properties = batch.properties or {}
     
     failed_constraints = {}
     missing_fields = {}
     is_compatible = True
     
     for constraint in constraints:
-        measurement = measurements_by_prop.get(constraint.property_definition_id)
+        # Assuming properties dict maps property_definition_id string to a dict with 'numeric_value'
+        prop_id_str = str(constraint.property_definition_id)
+        measurement = properties.get(prop_id_str)
         if not measurement:
             if constraint.missing_data_policy == models.MissingDataPolicy.HOLD:
                 is_compatible = False
-                missing_fields[str(constraint.property_definition_id)] = "Missing required measurement"
+                missing_fields[prop_id_str] = "Missing required measurement"
             continue
             
         if constraint.constraint_type == models.ConstraintType.HARD_LIMIT:
-            val = measurement.numeric_value
+            val = measurement.get("numeric_value") if isinstance(measurement, dict) else measurement
             if val is None:
+                continue
+            try:
+                val = float(val)
+            except (ValueError, TypeError):
                 continue
             if constraint.lower_bound is not None and val < constraint.lower_bound:
                 is_compatible = False

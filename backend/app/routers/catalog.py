@@ -50,12 +50,20 @@ def create_batch(listing_id: UUID, batch: schemas.MaterialBatchCreate, db: Sessi
     db.refresh(new_batch)
     return new_batch
 
-@router.post("/batches/{batch_id}/measurements", response_model=schemas.BatchMeasurementResponse, status_code=status.HTTP_201_CREATED)
-def add_measurement(batch_id: UUID, measurement: schemas.BatchMeasurementCreate, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
-    if measurement.batch_id != batch_id:
-        raise HTTPException(status_code=400, detail="Batch ID mismatch")
-    new_measurement = models.BatchMeasurement(**measurement.model_dump())
-    db.add(new_measurement)
+@router.patch("/batches/{batch_id}/properties", response_model=schemas.MaterialBatchResponse)
+def update_batch_properties(batch_id: UUID, properties: dict, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
+    batch = db.query(models.MaterialBatch).filter(models.MaterialBatch.id == batch_id).first()
+    if not batch:
+        raise HTTPException(status_code=404, detail="Batch not found")
+    
+    # Merge new properties with existing
+    current_props = batch.properties or {}
+    current_props.update(properties)
+    batch.properties = current_props
+    
+    from sqlalchemy.orm.attributes import flag_modified
+    flag_modified(batch, "properties")
+    
     db.commit()
-    db.refresh(new_measurement)
-    return new_measurement
+    db.refresh(batch)
+    return batch
