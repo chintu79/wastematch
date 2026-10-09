@@ -15,6 +15,32 @@ services:
       timeout: 5s
       retries: 5
 
+  pgbouncer:
+    image: edoburu/pgbouncer:latest
+    environment:
+      DB_USER: ${POSTGRES_USER:-wastematch}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-password}
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_NAME: ${POSTGRES_DB:-wastematch}
+      POOL_MODE: ${PGBOUNCER_POOL_MODE:-transaction}
+      MAX_CLIENT_CONN: ${PGBOUNCER_MAX_CLIENT_CONN:-500}
+      DEFAULT_POOL_SIZE: ${PGBOUNCER_DEFAULT_POOL_SIZE:-20}
+      MIN_POOL_SIZE: ${PGBOUNCER_MIN_POOL_SIZE:-5}
+      RESERVE_POOL_SIZE: ${PGBOUNCER_RESERVE_POOL_SIZE:-5}
+      MAX_DB_CONNECTIONS: ${PGBOUNCER_MAX_DB_CONNECTIONS:-50}
+      AUTH_TYPE: ${PGBOUNCER_AUTH_TYPE:-scram-sha-256}
+    ports:
+      - "6432:6432"
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -p 6432 -U $$DB_USER || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
   api:
     build: ./backend
     ports:
@@ -22,7 +48,9 @@ services:
     environment:
       ENVIRONMENT: ${ENVIRONMENT:-development}
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
-      DATABASE_URL: postgresql+psycopg2://${POSTGRES_USER:-wastematch}:${POSTGRES_PASSWORD:-password}@db:5432/${POSTGRES_DB:-wastematch}
+      DATABASE_URL: postgresql+psycopg2://${POSTGRES_USER:-wastematch}:${POSTGRES_PASSWORD:-password}@pgbouncer:6432/${POSTGRES_DB:-wastematch}
+      DB_POOL_SIZE: ${DB_POOL_SIZE:-20}
+      DB_MAX_OVERFLOW: ${DB_MAX_OVERFLOW:-10}
       # Critical configuration - compose fails fast here, and the API
       # validates again at startup (Issue #38). Copy .env.example to .env.
       OIDC_ISSUER: ${OIDC_ISSUER:?OIDC_ISSUER is required - copy .env.example to .env}
@@ -36,6 +64,8 @@ services:
       S3_BUCKET_NAME: ${S3_BUCKET_NAME:-}
       S3_ENDPOINT_URL: ${S3_ENDPOINT_URL:-}
     depends_on:
+      pgbouncer:
+        condition: service_healthy
       db:
         condition: service_healthy
 
@@ -50,10 +80,14 @@ services:
       dockerfile: Dockerfile
     command: celery -A app.worker.celery_app worker --loglevel=info
     environment:
-      - DATABASE_URL=postgresql://${POSTGRES_USER:-wastematch}:${POSTGRES_PASSWORD:-password}@db:5432/${POSTGRES_DB:-wastematch}
+      - DATABASE_URL=postgresql+psycopg2://${POSTGRES_USER:-wastematch}:${POSTGRES_PASSWORD:-password}@pgbouncer:6432/${POSTGRES_DB:-wastematch}
+      - DB_POOL_SIZE=${DB_WORKER_POOL_SIZE:-5}
+      - DB_MAX_OVERFLOW=${DB_WORKER_MAX_OVERFLOW:-5}
       - CELERY_BROKER_URL=redis://redis:6379/0
       - CELERY_RESULT_BACKEND=redis://redis:6379/0
     depends_on:
+      pgbouncer:
+        condition: service_healthy
       db:
         condition: service_healthy
       redis:

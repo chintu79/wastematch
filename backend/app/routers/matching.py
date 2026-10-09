@@ -70,9 +70,6 @@ def discover_candidates(req: schemas.DiscoverRequest, db: Session = Depends(get_
     if not receiving_facility or receiving_facility.coordinates is None:
         raise HTTPException(status_code=400, detail="Receiving facility coordinates not set")
 
-    # ST_DistanceSphere returns distance in meters
-    max_dist_meters = req.max_distance_km * 1000.0
-
     # Query matching MaterialBatches
     candidates = db.query(
         models.MaterialBatch.id.label("batch_id"),
