@@ -35,6 +35,8 @@ class User(Base):
     full_name = Column(String, nullable=False)
     identity_provider_id = Column(String, unique=True, index=True, nullable=True)
     account_status = Column(Enum(AccountStatus), default=AccountStatus.ACTIVE)
+    is_deleted = Column(Boolean, default=False)
+    deleted_at = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
@@ -320,6 +322,8 @@ class Inquiry(Base):
     producer_organization_id = Column(UUID(as_uuid=True), ForeignKey("organizations.id"), nullable=False)
     inquiry_status = Column(Enum(InquiryStatus), default=InquiryStatus.OPEN)
     rejection_reason = Column(String, nullable=True)
+    is_deleted = Column(Boolean, default=False)
+    deleted_at = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
@@ -344,5 +348,19 @@ class Document(Base):
     file_size = Column(Integer, nullable=False)
     content_type = Column(String, nullable=False)
     document_status = Column(Enum(DocumentStatus), default=DocumentStatus.ACTIVE)
+    is_deleted = Column(Boolean, default=False)
+    deleted_at = Column(DateTime, nullable=True)
     uploaded_at = Column(DateTime, default=datetime.utcnow)
     expires_at = Column(DateTime, nullable=True)
+
+class DocumentAccess(Base):
+    __tablename__ = "document_access"
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
+    document_id = Column(UUID(as_uuid=True), ForeignKey("documents.id"), nullable=False)
+    granted_to_organization_id = Column(UUID(as_uuid=True), ForeignKey("organizations.id"), nullable=False)
+    granted_by_user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+    granted_at = Column(DateTime, default=datetime.utcnow)
+    expires_at = Column(DateTime, nullable=True)
+    is_revoked = Column(Boolean, default=False)
+    revoked_at = Column(DateTime, nullable=True)
+
