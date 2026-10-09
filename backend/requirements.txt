@@ -18,3 +18,4 @@ redis
 PyJWT[crypto]
 requests
 GeoAlchemy2
+slowapi

@@ -9,6 +9,7 @@ from .. import models, schemas
 from ..auth import get_current_user
 from ..database import get_db
 from ..worker import process_match_evaluation_async
+from ..limiter import limiter
 
 router = APIRouter(prefix="/api/v1/matches", tags=["matching"])
 
@@ -109,7 +110,8 @@ def _queue_evaluation(db: Session, batch_id: UUID, spec_id: UUID) -> models.Matc
     return db_eval
 
 @router.post("/evaluate", response_model=schemas.MatchEvaluationResponse, status_code=status.HTTP_202_ACCEPTED)
-def evaluate_candidate(match_request: schemas.MatchRequest, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
+@limiter.limit("10/minute")
+def evaluate_candidate(request: Request, match_request: schemas.MatchRequest, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
     batch = db.query(models.MaterialBatch).filter(models.MaterialBatch.id == match_request.material_batch_id).first()
     spec = db.query(models.BuyerSpecification).filter(models.BuyerSpecification.id == match_request.buyer_specification_id).first()
     
