@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import Any, Optional
 from uuid import UUID
 
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, Field
 
 from .models import AccountStatus, FacilityStatus, OrgType, VerificationStatus
 
@@ -310,6 +310,17 @@ class MatchEvaluationResponse(MatchEvaluationBase):
 class MatchRequest(BaseModel):
     material_batch_id: UUID
     buyer_specification_id: UUID
+
+class MatchDiscoveryRequest(BaseModel):
+    buyer_specification_id: UUID
+    limit: int = Field(default=100, ge=1, le=1000)
+
+class MatchDiscoveryResponse(BaseModel):
+    batches_scanned: int
+    candidates_found: int
+    candidates_excluded: int
+    evaluations_queued: int
+    queued_batch_ids: list[UUID]
 
 from .models import DocumentStatus, DocumentType, InquiryStatus, SampleRequestStatus
 
