@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import Any, Generic, TypeVar, Optional
 from uuid import UUID
 
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, Field
 
 from .models import AccountStatus, FacilityStatus, OrgType, VerificationStatus
 

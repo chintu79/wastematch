@@ -34,6 +34,7 @@ class User(Base):
     __tablename__ = "users"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
+    organization_id = Column(UUID(as_uuid=True), ForeignKey("organizations.id"), nullable=True)
     email = Column(String, unique=True, index=True, nullable=False)
     full_name = Column(String, nullable=False)
     identity_provider_id = Column(String, unique=True, index=True, nullable=True)
@@ -357,3 +358,32 @@ class DocumentAccess(Base):
     is_revoked = Column(Boolean, default=False)
     revoked_at = Column(DateTime, nullable=True)
 
+
+
+# --- RLS DDL Events ---
+from sqlalchemy import event, DDL
+
+def setup_rls(target, connection, **kw):
+    if connection.dialect.name == "postgresql":
+        for table in ["material_listings", "facilities", "buyer_specifications", "documents"]:
+            connection.execute(DDL(f"ALTER TABLE {table} ENABLE ROW LEVEL SECURITY;"))
+            connection.execute(DDL(f"ALTER TABLE {table} FORCE ROW LEVEL SECURITY;"))
+            
+            # Policy: users can only see rows where organization_id matches their current_tenant_id
+            # Or if current_tenant_id is not set (e.g., admin), they see nothing or we can handle it.
+            # Here we assume current_tenant_id is always set.
+            # Some tables use 'organization_id', some use 'buyer_organization_id', some use 'owner_organization_id'
+            org_col = "organization_id"
+            if table == "buyer_specifications":
+                org_col = "buyer_organization_id"
+            elif table == "documents":
+                org_col = "owner_organization_id"
+                
+            policy_sql = f"""
+            CREATE POLICY tenant_isolation_policy ON {table}
+            USING ({org_col} = NULLIF(current_setting('wastematch.current_tenant_id', true), '')::uuid)
+            WITH CHECK ({org_col} = NULLIF(current_setting('wastematch.current_tenant_id', true), '')::uuid);
+            """
+            connection.execute(DDL(policy_sql))
+
+event.listen(Base.metadata, 'after_create', setup_rls)
