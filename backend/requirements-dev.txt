@@ -1,1 +1,3 @@
-pytest\nhttpx\nruff
+pytest
+httpx
+ruff
