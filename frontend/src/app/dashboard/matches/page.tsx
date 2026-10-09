@@ -11,6 +11,13 @@ import {
 import { Badge, BadgeVariant } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { apiRequest } from '@/lib/api';
+import dynamic from 'next/dynamic';
+
+const InteractiveMap = dynamic(
+  () => import('@/components/dashboard/InteractiveMap'),
+  { ssr: false, loading: () => <div className="h-[600px] w-full animate-pulse bg-slate-100 rounded-xl flex items-center justify-center text-slate-400">Loading map...</div> }
+);
+
 import { useAuth } from '@/context/AuthContext';
 import {
   getStoredMatches,
@@ -32,6 +39,8 @@ import {
   WifiOff,
   RefreshCw,
   MapPin,
+  Map,
+  List,
 } from 'lucide-react';
 
 const STATUS_BADGE: Record<TechnicalStatus, { variant: BadgeVariant; label: string }> = {
@@ -84,6 +93,7 @@ export default function MatchesPage() {
   const [producerOrgId, setProducerOrgId] = useState(PRODUCER_ORGS[0].id);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [toast, setToast] = useState<Toast | null>(null);
+  const [viewMode, setViewMode] = useState<'list' | 'map'>('list');
 
   const notify = (kind: Toast['kind'], message: string) => {
     setToast({ kind, message });
@@ -197,18 +207,40 @@ export default function MatchesPage() {
             full explanations for every verdict.
           </p>
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => {
-            setIsLoading(true);
-            loadMatches();
-          }}
-          disabled={isLoading}
-        >
-          <RefreshCw className={`h-3.5 w-3.5 ${isLoading ? 'animate-spin' : ''}`} />
-          Refresh
-        </Button>
+        <div className="flex items-center gap-2">
+          <div className="flex bg-slate-100 p-1 rounded-lg">
+            <button
+              onClick={() => setViewMode('list')}
+              className={`px-3 py-1.5 text-xs font-medium rounded-md flex items-center gap-1.5 transition-colors ${
+                viewMode === 'list' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-700'
+              }`}
+            >
+              <List className="h-3.5 w-3.5" />
+              List
+            </button>
+            <button
+              onClick={() => setViewMode('map')}
+              className={`px-3 py-1.5 text-xs font-medium rounded-md flex items-center gap-1.5 transition-colors ${
+                viewMode === 'map' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-700'
+              }`}
+            >
+              <Map className="h-3.5 w-3.5" />
+              Map
+            </button>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              setIsLoading(true);
+              loadMatches();
+            }}
+            disabled={isLoading}
+          >
+            <RefreshCw className={`h-3.5 w-3.5 ${isLoading ? 'animate-spin' : ''}`} />
+            Refresh
+          </Button>
+        </div>
       </div>
 
       {/* Offline / demo-data notice */}
@@ -339,7 +371,15 @@ export default function MatchesPage() {
         </CardContent>
       </Card>
 
-      {/* Matches list */}
+      {/* Matches view */}
+      {viewMode === 'map' ? (
+        <InteractiveMap
+          matches={filteredMatches}
+          getBatchLabel={getBatchLabel}
+          getSpecLabel={getSpecLabel}
+          onSendInquiry={(match) => { setInquiryFor(match.id); setViewMode('list'); }}
+        />
+      ) : (
       <Card>
         <CardHeader>
           <div>
@@ -605,6 +645,7 @@ export default function MatchesPage() {
           </div>
         )}
       </Card>
+      )}
     </div>
   );
 }
