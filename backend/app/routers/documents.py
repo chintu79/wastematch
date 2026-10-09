@@ -1,4 +1,3 @@
-import os
 import uuid
 from uuid import UUID
 
@@ -9,6 +8,7 @@ from sqlalchemy.orm import Session
 
 from .. import models, schemas
 from ..auth import get_current_user
+from ..config import get_settings
 from ..database import get_db
 
 router = APIRouter(prefix="/api/v1/documents", tags=["documents"])
