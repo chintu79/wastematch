@@ -90,6 +90,19 @@ def process_match_evaluation_async(self, evaluation_id: str, batch_id: str, spec
         
         db.commit()
         
+        # Publish completion event to Redis
+        import redis
+        import json
+        redis_client = redis.from_url(CELERY_BROKER_URL)
+        event_data = {
+            "type": "evaluation_completed",
+            "evaluation_id": evaluation_id,
+            "status": tech_status.value,
+            "batch_id": batch_id,
+            "spec_id": spec_id
+        }
+        redis_client.publish("job_updates", json.dumps(event_data))
+
         logger.info("finished_background_evaluation", evaluation_id=evaluation_id, status=tech_status.value)
         return {"status": "success", "evaluation_id": evaluation_id}
     except Exception as exc:
