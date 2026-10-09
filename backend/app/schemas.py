@@ -310,6 +310,22 @@ class InquiryBase(BaseModel):
 class InquiryCreate(InquiryBase):
     pass
 
+
+class InquiryMessageBase(BaseModel):
+    content: str
+    is_system_message: bool = False
+
+class InquiryMessageCreate(InquiryMessageBase):
+    pass
+
+class InquiryMessageResponse(InquiryMessageBase):
+    id: UUID
+    inquiry_id: UUID
+    sender_user_id: UUID
+    created_at: datetime
+    
+    model_config = ConfigDict(from_attributes=True)
+
 class InquiryResponse(InquiryBase):
     id: UUID
     inquiry_status: InquiryStatus
