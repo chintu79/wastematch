@@ -42,6 +42,7 @@ def test_user(db_session):
     user = models.User(
         email="test@example.com",
         full_name="Test User"
+        
     )
     db_session.add(user)
     db_session.commit()

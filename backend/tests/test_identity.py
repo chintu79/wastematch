@@ -1,7 +1,5 @@
-def test_get_user_by_id(client, test_user):
-    # The API exposes single-user reads (GET /users/{user_id}); there is no
-    # user-list endpoint.
-    response = client.get(f"/api/v1/users/{test_user.id}")
+def test_get_users_empty(client):
+    response = client.get("/api/v1/users")
     assert response.status_code == 200
     assert response.json()["email"] == "test@example.com"
 
