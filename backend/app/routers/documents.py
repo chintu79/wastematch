@@ -1,15 +1,15 @@
-from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File
-from sqlalchemy.orm import Session
-from typing import List, Dict, Any
-from uuid import UUID
-import uuid
 import os
+import uuid
+from uuid import UUID
+
 import boto3
-from botocore.exceptions import NoCredentialsError, ClientError
+from botocore.exceptions import ClientError
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
+from sqlalchemy.orm import Session
 
 from .. import models, schemas
-from ..database import get_db
 from ..auth import get_current_user
+from ..database import get_db
 
 router = APIRouter(prefix="/api/v1/documents", tags=["documents"])
 
@@ -48,7 +48,7 @@ def generate_presigned_url(filename: str, content_type: str, current_user: model
             ExpiresIn=3600 # 1 hour
         )
         return {"presigned_post": presigned_post, "s3_key": s3_key}
-    except ClientError as e:
+    except ClientError:
         raise HTTPException(status_code=500, detail="Could not generate presigned URL")
 
 @router.post("/direct-upload", response_model=schemas.DocumentResponse, status_code=status.HTTP_201_CREATED)
@@ -73,7 +73,7 @@ def upload_file_direct(
             s3_key,
             ExtraArgs={"ContentType": file.content_type}
         )
-    except Exception as e:
+    except Exception:
         raise HTTPException(status_code=500, detail="File upload to S3 failed")
     
     # Save metadata to database

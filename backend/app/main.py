@@ -1,12 +1,19 @@
-from fastapi import FastAPI, Request
-from starlette.middleware.base import BaseHTTPMiddleware
-from asgi_correlation_id import CorrelationIdMiddleware, correlation_id
-import structlog
 import time
-import logging
 
-from .database import engine, Base
-from .routers import identity, catalog, regulatory, specification, matching, inquiries, documents, health
+import structlog
+from asgi_correlation_id import CorrelationIdMiddleware, correlation_id
+from fastapi import FastAPI, Request
+
+from .routers import (
+    catalog,
+    documents,
+    health,
+    identity,
+    inquiries,
+    matching,
+    regulatory,
+    specification,
+)
 
 # Configure structlog
 structlog.configure(

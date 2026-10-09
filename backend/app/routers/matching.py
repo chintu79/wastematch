@@ -1,12 +1,12 @@
+import uuid
+from uuid import UUID
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from typing import List, Dict, Any
-from uuid import UUID
-import uuid
 
 from .. import models, schemas
-from ..database import get_db
 from ..auth import get_current_user
+from ..database import get_db
 
 router = APIRouter(prefix="/api/v1/matches", tags=["matching"])
 
@@ -19,7 +19,6 @@ def evaluate_technical_constraints(db: Session, batch_id: UUID, spec_id: UUID):
     failed_constraints = {}
     missing_fields = {}
     is_compatible = True
-    needs_treatment = False
     
     for constraint in constraints:
         measurement = measurements_by_prop.get(constraint.property_definition_id)
@@ -79,7 +78,7 @@ def evaluate_candidate(match_request: schemas.MatchRequest, db: Session = Depend
     db.refresh(db_eval)
     return db_eval
 
-@router.get("/", response_model=List[schemas.MatchEvaluationResponse])
+@router.get("/", response_model=list[schemas.MatchEvaluationResponse])
 def get_matches(db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
     return db.query(models.MatchEvaluation).all()
 

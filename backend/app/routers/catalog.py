@@ -1,11 +1,11 @@
-from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.orm import Session
-from typing import List
 from uuid import UUID
 
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy.orm import Session
+
 from .. import models, schemas
-from ..database import get_db
 from ..auth import get_current_user
+from ..database import get_db
 
 router = APIRouter(prefix="/api/v1/materials", tags=["catalog"])
 
@@ -17,7 +17,7 @@ def create_category(category: schemas.MaterialCategoryCreate, db: Session = Depe
     db.refresh(db_cat)
     return db_cat
 
-@router.get("/categories", response_model=List[schemas.MaterialCategoryResponse])
+@router.get("/categories", response_model=list[schemas.MaterialCategoryResponse])
 def get_categories(db: Session = Depends(get_db)):
     return db.query(models.MaterialCategory).all()
 
@@ -29,7 +29,7 @@ def create_listing(listing: schemas.MaterialListingCreate, db: Session = Depends
     db.refresh(new_listing)
     return new_listing
 
-@router.get("/listings", response_model=List[schemas.MaterialListingResponse])
+@router.get("/listings", response_model=list[schemas.MaterialListingResponse])
 def get_listings(db: Session = Depends(get_db)):
     return db.query(models.MaterialListing).all()
 

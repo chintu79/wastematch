@@ -1,10 +1,13 @@
+import enum
 import uuid
-from sqlalchemy import Column, Integer, String, Enum, DateTime, ForeignKey, Float, JSON
+from datetime import datetime
+
+from sqlalchemy import JSON, Column, DateTime, Enum, Float, ForeignKey, Integer, String
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
+
 from .database import Base
-from datetime import datetime
-import enum
+
 
 def generate_uuid():
     return str(uuid.uuid4())
@@ -217,6 +220,7 @@ class RegulatoryEvaluation(Base):
     review_status = Column(Enum(EvaluationReviewStatus), default=EvaluationReviewStatus.PENDING_REVIEW)
 
 from sqlalchemy import Boolean
+
 
 class SpecificationStatus(enum.Enum):
     DRAFT = "DRAFT"
