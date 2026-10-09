@@ -19,7 +19,7 @@ from app.config import get_settings
 # fast on missing or invalid environment variables (Issue #38).
 settings = get_settings()
 
-from app.database import engine  # noqa: E402  (depends on validated settings)
+from app.database import engine
 
 
 @asynccontextmanager

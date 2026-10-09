@@ -50,11 +50,13 @@ def enforce_retention_policies():
     """
     logger.info("starting_retention_enforcement")
     try:
-        from datetime import datetime, timedelta
-        from sqlalchemy.orm import Session
-        from sqlalchemy import create_engine
-        from app.models import Inquiry, Document, User, InquiryStatus, DocumentStatus
         import os
+        from datetime import datetime, timedelta
+
+        from sqlalchemy import create_engine
+        from sqlalchemy.orm import Session
+
+        from app.models import Document, DocumentStatus, Inquiry, InquiryStatus, User
 
         DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./wastematch.db")
         engine = create_engine(DATABASE_URL)
