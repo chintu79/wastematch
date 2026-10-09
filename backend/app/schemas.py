@@ -167,3 +167,50 @@ class BatchMeasurementResponse(BatchMeasurementBase):
 
     class Config:
         from_attributes = True
+
+from .models import JurisdictionLevel, RuleReviewStatus, EligibilityStatus, EvaluationReviewStatus
+
+class RegulatoryRuleBase(BaseModel):
+    rule_code: str
+    title: str
+    legal_instrument: str
+    legal_clause_reference: str
+    jurisdiction_level: JurisdictionLevel
+    applicability_definition: Dict[str, Any]
+    required_conditions: Dict[str, Any]
+    effective_from: datetime
+    effective_until: Optional[datetime] = None
+    source_reference: Optional[str] = None
+
+class RegulatoryRuleCreate(RegulatoryRuleBase):
+    pass
+
+class RegulatoryRuleResponse(RegulatoryRuleBase):
+    id: UUID
+    review_status: RuleReviewStatus
+    reviewed_by: Optional[UUID] = None
+    reviewed_at: Optional[datetime] = None
+    rule_version: int
+
+    class Config:
+        from_attributes = True
+
+class RegulatoryEvaluationBase(BaseModel):
+    candidate_id: UUID
+    rule_set_version: str
+    decision_reasons: Optional[Dict[str, Any]] = None
+    evidence_references: Optional[Dict[str, Any]] = None
+    unresolved_conditions: Optional[Dict[str, Any]] = None
+
+class RegulatoryEvaluationCreate(RegulatoryEvaluationBase):
+    pass
+
+class RegulatoryEvaluationResponse(RegulatoryEvaluationBase):
+    id: UUID
+    eligibility_status: EligibilityStatus
+    evaluated_at: datetime
+    reviewer_id: Optional[UUID] = None
+    review_status: EvaluationReviewStatus
+
+    class Config:
+        from_attributes = True
