@@ -36,8 +36,13 @@ class Settings(BaseSettings):
     ENVIRONMENT: str = Field(default="development")
     LOG_LEVEL: str = Field(default="INFO")
 
-    # --- Database (required) ---
+    # --- Database (required) & Connection Pooling (Issue #67) ---
     DATABASE_URL: str
+    DB_POOL_SIZE: int = Field(default=20, ge=1, description="QueuePool persistent pool size")
+    DB_MAX_OVERFLOW: int = Field(default=10, ge=0, description="QueuePool max overflow connections")
+    DB_POOL_TIMEOUT: int = Field(default=30, ge=1, description="QueuePool connection checkout timeout in seconds")
+    DB_POOL_RECYCLE: int = Field(default=1800, ge=1, description="QueuePool connection recycle timeout in seconds")
+    DB_POOL_PRE_PING: bool = Field(default=True, description="Enable connection pre-ping liveness test")
 
     # --- OIDC identity provider (required) ---
     # auth.py is currently a mock; these settings define the provider

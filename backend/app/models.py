@@ -2,8 +2,8 @@ import enum
 import uuid
 from datetime import datetime
 
-from sqlalchemy import JSON, Column, DateTime, Boolean, Enum, Float, ForeignKey, Integer, String
-from sqlalchemy.dialects.postgresql import UUID, JSONB
+from sqlalchemy import JSON, Boolean, Column, DateTime, Enum, Float, ForeignKey, Integer, PrimaryKeyConstraint, String
+from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import relationship
 
 from .database import Base
@@ -92,6 +92,7 @@ class BatchStatus(enum.Enum):
     AVAILABLE = "AVAILABLE"
     RESERVED = "RESERVED"
     CONSUMED = "CONSUMED"
+    ARCHIVED = "ARCHIVED"
 
 class DataType(enum.Enum):
     NUMERIC = "NUMERIC"
@@ -143,6 +144,9 @@ class MaterialBatch(Base):
     sampled_at = Column(DateTime, nullable=True)
     batch_status = Column(Enum(BatchStatus), default=BatchStatus.AVAILABLE)
     properties = Column(JSON().with_variant(JSONB, 'postgresql'), default=dict)
+    is_archived = Column(Boolean, default=False, index=True)
+    archived_at = Column(DateTime, nullable=True)
+    archive_s3_uri = Column(String, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 
 class PropertyDefinition(Base):

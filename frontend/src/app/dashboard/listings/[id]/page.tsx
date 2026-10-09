@@ -1,392 +1,315 @@
-'use client';
+"use client";
 
-import React, { useState, Suspense } from 'react';
-import { useParams } from 'next/navigation';
-import Link from 'next/link';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/Card';
-import { Badge } from '@/components/ui/Badge';
-import { Button } from '@/components/ui/Button';
-import { getStoredListings, publishListingById } from '@/lib/materialData';
-import { MaterialListing } from '@/types/material';
-import {
-  ArrowLeft,
-  FileCheck2,
-  FileWarning,
-  MapPin,
-  Sparkles,
-  CheckCircle2,
-  Download,
-  Share2,
-} from 'lucide-react';
+import { useState } from "react";
+import Link from "next/link";
+import { 
+  ArrowLeft, FileText, CheckCircle2, ShieldCheck, MapPin, Download, 
+  MessageSquare, Heart, Share2, Info, CheckCircle, PackageOpen, Truck 
+} from "lucide-react";
 
-function ListingDetailContent() {
-  const params = useParams();
-  const listingId = params?.id as string;
-  const [listing, setListing] = useState<MaterialListing | null>(() => {
-    const listings = getStoredListings();
-    return listings.find((l) => l.id === listingId) || null;
-  });
-  const [notification, setNotification] = useState<string | null>(null);
+export default function MaterialListingDetailPage() {
+  const [activeTab, setActiveTab] = useState("overview");
 
-  if (!listing) {
-    return (
-      <div className="py-16 text-center max-w-md mx-auto">
-        <h2 className="text-base font-bold text-slate-800">Material Listing Not Found</h2>
-        <p className="text-xs text-slate-500 mt-1">
-          The requested material listing ID &ldquo;{listingId}&rdquo; could not be retrieved from the active inventory.
-        </p>
-        <Link href="/dashboard/listings">
-          <Button variant="outline" size="sm" className="mt-4">
-            <ArrowLeft className="h-4 w-4 mr-1" />
-            Return to Listings
-          </Button>
-        </Link>
-      </div>
-    );
-  }
-
-  const handlePublish = () => {
-    const updated = publishListingById(listing.id);
-    if (updated) {
-      setListing(updated);
-      setNotification('Listing has been successfully validated and published to the marketplace.');
-      setTimeout(() => setNotification(null), 4000);
-    }
+  // Mock data representing the material
+  const material = {
+    id: "MAT-2049",
+    title: "High-Purity Copper Slag",
+    category: "Metals",
+    seller: "Industrial Metals Corp",
+    location: "Bhosari MIDC, Pune",
+    quantity: "200 Tons",
+    availability: "Immediate",
+    price: "₹2,500 / Ton",
+    description: "By-product of copper smelting process. Mechanically granulated and water-quenched. Suitable for abrasive grit manufacturing, roofing granules, and Portland cement additive. Free from hazardous heavy metals beyond permissible limits.",
+    process: "Flash smelting of copper concentrates",
+    specifications: [
+      { name: "Copper (Cu)", value: "0.8 - 1.2%", method: "XRF", verified: true },
+      { name: "Iron Oxide (FeO)", value: "40 - 50%", method: "XRF", verified: true },
+      { name: "Silica (SiO2)", value: "30 - 35%", method: "Wet Analysis", verified: true },
+      { name: "Moisture", value: "< 0.5%", method: "Gravimetric", verified: true },
+      { name: "Specific Gravity", value: "3.5", method: "ASTM C128", verified: false },
+    ],
+    documents: [
+      { id: 1, name: "NABL Lab Test Report - Composition", date: "Oct 2026", size: "1.2 MB", type: "PDF" },
+      { id: 2, name: "Safety Data Sheet (SDS)", date: "Jan 2026", size: "850 KB", type: "PDF" },
+      { id: 3, name: "MPCB Authorization Form", date: "Mar 2026", size: "2.1 MB", type: "PDF" },
+    ]
   };
 
-  const primaryBatch = listing.batches[0];
-
   return (
-    <div className="space-y-6 max-w-5xl mx-auto pb-12">
-      {/* Back button & Action Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <Link
-            href="/dashboard/listings"
-            className="text-xs text-slate-500 hover:text-slate-900 inline-flex items-center gap-1 mb-1.5"
-          >
-            <ArrowLeft className="h-3 w-3" /> Back to Material Listings
+    <div className="flex-1 bg-gray-50 min-h-screen">
+      {/* Top Nav */}
+      <div className="bg-white border-b border-gray-200 sticky top-0 z-10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
+          <Link href="/dashboard/buyer/matches" className="flex items-center text-sm font-medium text-gray-500 hover:text-gray-900">
+            <ArrowLeft className="w-4 h-4 mr-1" /> Back to matches
           </Link>
-          <div className="flex items-center gap-2.5 flex-wrap">
-            <h1 className="text-2xl font-bold tracking-tight text-slate-900">
-              {listing.title}
-            </h1>
-            <Badge variant={listing.regulatory_status}>
-              {listing.regulatory_status === 'eligible'
-                ? 'Legal: Eligible'
-                : listing.regulatory_status === 'on_hold'
-                ? 'Legal: On Hold'
-                : 'Legal: Ineligible'}
-            </Badge>
-            <Badge variant={listing.listing_status === 'published' ? 'published' : 'draft'}>
-              {listing.listing_status.toUpperCase()}
-            </Badge>
+          <div className="flex items-center space-x-3">
+            <button className="p-2 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100">
+              <Share2 className="w-5 h-5" />
+            </button>
+            <button className="p-2 text-gray-400 hover:text-red-500 rounded-full hover:bg-gray-100">
+              <Heart className="w-5 h-5" />
+            </button>
           </div>
-          <p className="text-xs text-slate-500 mt-1">
-            Batch Reference: <span className="font-mono font-semibold text-slate-700">{primaryBatch?.batch_reference || 'N/A'}</span> • Created {new Date(listing.created_at).toLocaleDateString()}
-          </p>
-        </div>
-
-        <div className="flex items-center gap-2">
-          {listing.listing_status === 'draft' && (
-            <Button variant="primary" size="sm" onClick={handlePublish}>
-              Publish Listing
-            </Button>
-          )}
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => alert(`Direct share link copied: ${window.location.href}`)}
-          >
-            <Share2 className="h-3.5 w-3.5 mr-1" />
-            Share
-          </Button>
         </div>
       </div>
 
-      {notification && (
-        <div className="rounded-xl border border-emerald-300 bg-emerald-50 p-3.5 text-emerald-950 flex items-center justify-between shadow-2xs">
-          <div className="flex items-center gap-2 text-xs font-medium">
-            <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
-            <span>{notification}</span>
-          </div>
-          <button
-            type="button"
-            onClick={() => setNotification(null)}
-            className="text-xs font-bold text-emerald-700 hover:text-emerald-950"
-          >
-            ✕
-          </button>
-        </div>
-      )}
-
-      {/* Main Grid: Identity & Logistics */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* Left 2 Cols: Details & Properties */}
-        <div className="md:col-span-2 space-y-6">
-          {/* Identity & Process Overview */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Material Identity & Origin</CardTitle>
-              <CardDescription>
-                Generation process and material parameters from the producing facility
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4 text-xs">
-              <div>
-                <span className="font-bold text-slate-500 uppercase tracking-wider block text-[11px]">
-                  Description
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="flex flex-col lg:flex-row gap-8">
+          
+          {/* Main Content Area */}
+          <div className="flex-1 min-w-0">
+            {/* Hero Section */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 sm:p-8 mb-8">
+              <div className="flex items-center space-x-2 mb-3">
+                <span className="bg-blue-100 text-blue-800 text-xs font-bold px-2.5 py-1 rounded-full uppercase tracking-wide">
+                  {material.category}
                 </span>
-                <p className="text-slate-800 mt-1 leading-relaxed">{listing.description}</p>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-slate-100">
-                <div>
-                  <span className="font-bold text-slate-500 uppercase tracking-wider block text-[11px]">
-                    Quality Grade / Purity
-                  </span>
-                  <p className="font-mono text-slate-900 font-semibold mt-0.5">{listing.grade}</p>
-                </div>
-                <div>
-                  <span className="font-bold text-slate-500 uppercase tracking-wider block text-[11px]">
-                    Material Category
-                  </span>
-                  <p className="text-slate-900 font-semibold mt-0.5">{listing.category_name}</p>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-slate-100">
-                <div>
-                  <span className="font-bold text-slate-500 uppercase tracking-wider block text-[11px]">
-                    Source Process
-                  </span>
-                  <p className="text-slate-800 mt-0.5">{listing.source_process}</p>
-                </div>
-                <div>
-                  <span className="font-bold text-slate-500 uppercase tracking-wider block text-[11px]">
-                    Known Prior Contaminants
-                  </span>
-                  <p className="text-slate-800 mt-0.5">{listing.prior_contaminants || 'None disclosed'}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Technical Properties Table */}
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between w-full">
-                <div>
-                  <CardTitle>Technical Properties & Assay Matrix</CardTitle>
-                  <CardDescription>
-                    Measurements verified against batch sample records
-                  </CardDescription>
-                </div>
-                <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
-                  {primaryBatch?.measurements?.length || 0} Parameters Tested
+                <span className="flex items-center text-xs font-semibold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
+                  <ShieldCheck className="w-3.5 h-3.5 mr-1" /> Verified Seller
                 </span>
               </div>
-            </CardHeader>
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs text-slate-700">
-                <thead className="bg-slate-50/80 text-[11px] font-bold uppercase tracking-wider text-slate-500 border-b border-slate-200">
-                  <tr>
-                    <th className="px-4 py-3">Property</th>
-                    <th className="px-4 py-3">Measured Value</th>
-                    <th className="px-4 py-3">Measurement Basis</th>
-                    <th className="px-4 py-3">Laboratory / Method</th>
-                    <th className="px-4 py-3 text-right">Verification</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {primaryBatch?.measurements?.map((m) => (
-                    <tr key={m.id} className="hover:bg-slate-50/50">
-                      <td className="px-4 py-3 font-semibold text-slate-900">
-                        {m.property_name}
-                      </td>
-                      <td className="px-4 py-3 font-bold text-slate-900">
-                        {m.value} {m.unit}
-                      </td>
-                      <td className="px-4 py-3 capitalize text-slate-600">
-                        {m.basis.replace('_', ' ')}
-                      </td>
-                      <td className="px-4 py-3 text-slate-600">
-                        {m.laboratory_name || 'In-House'}
-                        {m.test_method && <span className="block text-[10px] text-slate-400 font-mono">{m.test_method}</span>}
-                      </td>
-                      <td className="px-4 py-3 text-right">
-                        {m.nabl_accredited ? (
-                          <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700">
-                            <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" /> NABL Verified
-                          </span>
-                        ) : (
-                          <span className="text-[11px] text-slate-400">Self-Reported</span>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+              
+              <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 mb-2">
+                {material.title}
+              </h1>
+              
+              <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600 mb-6">
+                <span className="font-medium text-gray-900">{material.seller}</span>
+                <span className="flex items-center"><MapPin className="w-4 h-4 mr-1 text-gray-400" /> {material.location}</span>
+                <span>ID: {material.id}</span>
+              </div>
+
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 py-4 border-t border-b border-gray-100 mb-6">
+                <div>
+                  <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold mb-1">Available Quantity</p>
+                  <p className="font-bold text-gray-900">{material.quantity}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold mb-1">Availability</p>
+                  <p className="font-bold text-gray-900">{material.availability}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold mb-1">Packaging</p>
+                  <p className="font-bold text-gray-900">Bulk</p>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold mb-1">Price</p>
+                  <p className="font-bold text-green-700">{material.price}</p>
+                </div>
+              </div>
             </div>
-          </Card>
 
-          {/* Supporting Evidence Documents */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Supporting Evidence & Certificates</CardTitle>
-              <CardDescription>
-                NABL lab test reports, MSDS, and state pollution control consents
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {primaryBatch?.documents?.length === 0 ? (
-                <div className="p-6 text-center border-2 border-dashed border-slate-200 rounded-xl">
-                  <FileWarning className="h-6 w-6 text-amber-500 mx-auto mb-1.5" />
-                  <p className="text-xs font-semibold text-slate-700">No lab documents attached</p>
-                  <p className="text-[11px] text-slate-500">
-                    Buyers cannot issue dispatch orders without certified laboratory records.
-                  </p>
-                </div>
-              ) : (
-                primaryBatch?.documents?.map((doc) => (
-                  <div
-                    key={doc.id}
-                    className="p-3.5 rounded-xl border border-slate-200 bg-white flex items-center justify-between"
+            {/* Information Tabs */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+              <div className="flex border-b border-gray-200 overflow-x-auto no-scrollbar">
+                {['overview', 'specifications', 'documents', 'qualification'].map((tab) => (
+                  <button
+                    key={tab}
+                    onClick={() => setActiveTab(tab)}
+                    className={`whitespace-nowrap px-6 py-4 text-sm font-bold border-b-2 transition-colors ${
+                      activeTab === tab 
+                        ? 'border-blue-600 text-blue-600' 
+                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    }`}
                   >
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 rounded-lg bg-emerald-50 text-emerald-700">
-                        <FileCheck2 className="h-5 w-5" />
+                    {tab.charAt(0).toUpperCase() + tab.slice(1)}
+                  </button>
+                ))}
+              </div>
+
+              <div className="p-6 sm:p-8">
+                {/* Overview Tab */}
+                {activeTab === 'overview' && (
+                  <div className="space-y-6 animate-in fade-in">
+                    <div>
+                      <h3 className="text-lg font-bold text-gray-900 mb-3">Description</h3>
+                      <p className="text-gray-600 leading-relaxed">{material.description}</p>
+                    </div>
+                    
+                    <div className="grid sm:grid-cols-2 gap-6 pt-6 border-t border-gray-100">
+                      <div>
+                        <h4 className="flex items-center text-sm font-bold text-gray-900 mb-2">
+                          <PackageOpen className="w-4 h-4 mr-2 text-gray-400" /> Origin Process
+                        </h4>
+                        <p className="text-sm text-gray-600">{material.process}</p>
                       </div>
                       <div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs font-bold text-slate-900">{doc.title}</span>
-                          <Badge variant="verified" size="sm">NABL Accredited</Badge>
-                        </div>
-                        <p className="text-[11px] text-slate-500 mt-0.5">
-                          {doc.file_name} • Issued: {doc.issue_date} • {doc.issuing_authority}
-                        </p>
+                        <h4 className="flex items-center text-sm font-bold text-gray-900 mb-2">
+                          <Truck className="w-4 h-4 mr-2 text-gray-400" /> Logistics Info
+                        </h4>
+                        <p className="text-sm text-gray-600">Minimum pickup 10 Tons. Forklift available on site. Loading hours: 9AM - 5PM Mon-Sat.</p>
                       </div>
                     </div>
-
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => alert(`Downloading verified document: ${doc.file_name}`)}
-                    >
-                      <Download className="h-3.5 w-3.5 mr-1" />
-                      Download
-                    </Button>
                   </div>
-                ))
-              )}
-            </CardContent>
-          </Card>
-        </div>
+                )}
 
-        {/* Right Col: Logistics & Action Sidebar */}
-        <div className="space-y-6">
-          {/* Volume & Availability Card */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Volume & Logistics</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4 text-xs">
-              <div>
-                <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider block">
-                  Available Supply
-                </span>
-                <span className="text-2xl font-bold text-slate-900 mt-1 block">
-                  {listing.total_volume} {listing.unit}
-                </span>
-                <span className="inline-block mt-1 text-[11px] font-medium text-slate-600 bg-slate-100 px-2 py-0.5 rounded">
-                  {listing.availability_type.replace('_', ' ')}
-                </span>
+                {/* Specifications Tab */}
+                {activeTab === 'specifications' && (
+                  <div className="animate-in fade-in">
+                    <h3 className="text-lg font-bold text-gray-900 mb-4">Chemical & Physical Properties</h3>
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-sm text-left border border-gray-200 rounded-lg overflow-hidden">
+                        <thead className="bg-gray-50 text-gray-700">
+                          <tr>
+                            <th className="px-4 py-3 font-semibold">Property</th>
+                            <th className="px-4 py-3 font-semibold">Value</th>
+                            <th className="px-4 py-3 font-semibold">Test Method</th>
+                            <th className="px-4 py-3 font-semibold text-right">Verification</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-200">
+                          {material.specifications.map((spec, idx) => (
+                            <tr key={idx} className="hover:bg-gray-50/50">
+                              <td className="px-4 py-3 font-medium text-gray-900">{spec.name}</td>
+                              <td className="px-4 py-3 text-gray-600">{spec.value}</td>
+                              <td className="px-4 py-3 text-gray-500">{spec.method}</td>
+                              <td className="px-4 py-3 text-right">
+                                {spec.verified ? (
+                                  <span className="inline-flex items-center text-emerald-600 text-xs font-bold">
+                                    <CheckCircle2 className="w-3.5 h-3.5 mr-1" /> NABL Verified
+                                  </span>
+                                ) : (
+                                  <span className="text-xs text-gray-400">Self-reported</span>
+                                )}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+
+                {/* Documents Tab */}
+                {activeTab === 'documents' && (
+                  <div className="animate-in fade-in">
+                    <h3 className="text-lg font-bold text-gray-900 mb-4">Available Documents</h3>
+                    <div className="space-y-3">
+                      {material.documents.map((doc) => (
+                        <div key={doc.id} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:border-gray-300 hover:shadow-sm transition-all bg-white">
+                          <div className="flex items-center">
+                            <div className="w-10 h-10 rounded bg-blue-50 flex items-center justify-center text-blue-600 mr-4">
+                              <FileText className="w-5 h-5" />
+                            </div>
+                            <div>
+                              <p className="font-semibold text-sm text-gray-900">{doc.name}</p>
+                              <p className="text-xs text-gray-500 mt-0.5">{doc.type} • {doc.size} • Uploaded {doc.date}</p>
+                            </div>
+                          </div>
+                          <button className="flex items-center text-blue-600 hover:text-blue-800 text-sm font-medium px-3 py-1.5 rounded-md hover:bg-blue-50 transition-colors">
+                            <Download className="w-4 h-4 mr-1.5" /> Download
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Qualification Tab */}
+                {activeTab === 'qualification' && (
+                  <div className="animate-in fade-in space-y-6">
+                    <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-5 flex items-start">
+                      <CheckCircle className="w-5 h-5 text-emerald-600 mt-0.5 mr-3 flex-shrink-0" />
+                      <div>
+                        <h4 className="font-bold text-emerald-900 mb-1">Eligible for MPCB Transfer</h4>
+                        <p className="text-sm text-emerald-800">Your organization has the required licenses to receive and process this category of material under current state regulations.</p>
+                      </div>
+                    </div>
+                    
+                    <div>
+                      <h4 className="font-bold text-gray-900 mb-3">Next Steps</h4>
+                      <ol className="relative border-l border-gray-200 ml-3 space-y-5">                  
+                        <li className="pl-6 relative">
+                          <span className="absolute flex items-center justify-center w-6 h-6 bg-blue-100 rounded-full -left-3 ring-4 ring-white text-blue-600 font-bold text-xs">1</span>
+                          <h5 className="font-semibold text-gray-900 text-sm">Request Sample</h5>
+                          <p className="text-sm text-gray-500 mt-1">Contact the supplier to arrange a physical sample for in-house testing.</p>
+                        </li>
+                        <li className="pl-6 relative">
+                          <span className="absolute flex items-center justify-center w-6 h-6 bg-gray-100 rounded-full -left-3 ring-4 ring-white text-gray-500 font-bold text-xs">2</span>
+                          <h5 className="font-semibold text-gray-900 text-sm">Agree on Terms</h5>
+                          <p className="text-sm text-gray-500 mt-1">Negotiate price, logistics, and recurring volume.</p>
+                        </li>
+                        <li className="pl-6 relative">
+                          <span className="absolute flex items-center justify-center w-6 h-6 bg-gray-100 rounded-full -left-3 ring-4 ring-white text-gray-500 font-bold text-xs">3</span>
+                          <h5 className="font-semibold text-gray-900 text-sm">Manifest Generation</h5>
+                          <p className="text-sm text-gray-500 mt-1">Platform automatically generates MPCB Form-10 manifests for dispatch.</p>
+                        </li>
+                      </ol>
+                    </div>
+                  </div>
+                )}
+
               </div>
+            </div>
+          </div>
 
-              <div className="pt-3 border-t border-slate-100">
-                <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider block">
-                  Origin Facility
-                </span>
-                <p className="font-semibold text-slate-900 mt-0.5">{listing.facility_name}</p>
-                <div className="flex items-center gap-1 text-[11px] text-slate-500 mt-1">
-                  <MapPin className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
-                  <span>{listing.facility_zone}</span>
+          {/* Sticky Sidebar (Action Panel) */}
+          <div className="w-full lg:w-80 flex-shrink-0">
+            <div className="sticky top-24 space-y-6">
+              
+              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <h3 className="font-bold text-gray-900 text-lg mb-4">Interested in this material?</h3>
+                <p className="text-sm text-gray-600 mb-6">Contact the supplier directly to request samples, ask technical questions, or negotiate terms.</p>
+                
+                <Link 
+                  href="/dashboard/inbox" 
+                  className="w-full flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg shadow-sm transition-colors mb-3"
+                >
+                  <MessageSquare className="w-4 h-4 mr-2" /> Request Information
+                </Link>
+                
+                <button className="w-full flex items-center justify-center bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-semibold py-2.5 px-4 rounded-lg transition-colors">
+                  <Bookmark className="w-4 h-4 mr-2 text-gray-400" /> Save for later
+                </button>
+                
+                <div className="mt-6 pt-6 border-t border-gray-100 flex items-center text-xs text-gray-500">
+                  <Info className="w-4 h-4 mr-2 flex-shrink-0" />
+                  <p>All communications are tracked to ensure regulatory compliance and platform safety.</p>
                 </div>
               </div>
 
-              <div className="pt-3 border-t border-slate-100">
-                <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider block">
-                  Holding Organization
-                </span>
-                <p className="font-semibold text-slate-900 mt-0.5">{listing.organization_name}</p>
+              {/* Related/Similar Materials (Optional Sidebar Widget) */}
+              <div className="bg-gray-50 border border-gray-200 rounded-xl p-5">
+                <h4 className="font-bold text-gray-800 text-sm mb-4">Similar Materials</h4>
+                <div className="space-y-3">
+                  <div className="group cursor-pointer">
+                    <p className="text-sm font-semibold text-blue-600 group-hover:underline">Granulated Blast Furnace Slag</p>
+                    <p className="text-xs text-gray-500">Tata Steel BSL • 500 Tons</p>
+                  </div>
+                  <div className="group cursor-pointer">
+                    <p className="text-sm font-semibold text-blue-600 group-hover:underline">Zinc Slag Residue</p>
+                    <p className="text-xs text-gray-500">Hindustan Zinc • 150 Tons</p>
+                  </div>
+                </div>
               </div>
-            </CardContent>
-          </Card>
 
-          {/* Regulatory Clearance Card */}
-          <Card className={listing.regulatory_status === 'eligible' ? 'border-emerald-200 bg-emerald-50/30' : 'border-amber-200 bg-amber-50/30'}>
-            <CardHeader>
-              <div className="flex items-center gap-2">
-                <Badge variant={listing.regulatory_status}>
-                  {listing.regulatory_status.toUpperCase()}
-                </Badge>
-                <CardTitle className="text-sm">Compliance Status</CardTitle>
-              </div>
-            </CardHeader>
-            <CardContent className="text-xs space-y-2">
-              <p className="text-slate-700 leading-relaxed">
-                {listing.regulatory_notes || 'Regulatory status evaluated according to Maharashtra Pollution Control Board guidelines.'}
-              </p>
-              <div className="pt-2 text-[11px] text-slate-500">
-                Jurisdiction: <span className="font-semibold text-slate-800">PCMC / MPCB Pune</span>
-              </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
 
-          {/* Potential Matches Lead Card */}
-          <Card className="border-purple-200 bg-purple-50/40">
-            <CardHeader>
-              <div className="flex items-center justify-between w-full">
-                <CardTitle className="text-sm flex items-center gap-1.5 text-purple-950">
-                  <Sparkles className="h-4 w-4 text-purple-700" />
-                  Candidate Buyers
-                </CardTitle>
-                <span className="text-xs font-bold text-purple-700 bg-purple-100 px-2 py-0.5 rounded-full">
-                  {listing.candidate_buyers_count} Leads
-                </span>
-              </div>
-            </CardHeader>
-            <CardContent className="text-xs space-y-3">
-              <p className="text-purple-900 leading-snug">
-                The matching engine found {listing.candidate_buyers_count} industrial buyers in Pune with active specifications compatible with this stream.
-              </p>
-              <Link href="/dashboard/matches" className="block w-full">
-                <Button
-                  variant="primary"
-                  size="sm"
-                  className="w-full bg-purple-700 hover:bg-purple-800"
-                >
-                  Inspect Buyer Matches
-                </Button>
-              </Link>
-            </CardContent>
-          </Card>
         </div>
       </div>
     </div>
   );
 }
 
-export default function MaterialListingDetailPage() {
+// Re-implement the lucide Bookmark icon since it wasn't imported above
+function Bookmark(props: any) {
   return (
-    <Suspense
-      fallback={
-        <div className="p-12 text-center text-xs text-slate-500">
-          Loading material listing details...
-        </div>
-      }
+    <svg
+      {...props}
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
     >
-      <ListingDetailContent />
-    </Suspense>
+      <path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z" />
+    </svg>
   );
 }

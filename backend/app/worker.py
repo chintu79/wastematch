@@ -24,6 +24,20 @@ celery_app.conf.update(
     result_serializer="json",
     timezone="UTC",
     enable_utc=True,
+    beat_schedule={
+        "enforce-retention-policies-daily": {
+            "task": "enforce_retention_policies",
+            "schedule": 86400.0,
+        },
+        "archive-completed-batches-daily": {
+            "task": "archive_completed_batches_to_data_lake",
+            "schedule": 86400.0,
+        },
+        "maintain-database-partitions-weekly": {
+            "task": "maintain_database_partitions",
+            "schedule": 86400.0 * 7,
+        },
+    },
 )
 
 def evaluate_technical_constraints(db: Session, batch_id: str, spec_id: str):
@@ -126,17 +140,11 @@ def enforce_retention_policies():
     """
     logger.info("starting_retention_enforcement")
     try:
-        import os
         from datetime import datetime, timedelta
-
-        from sqlalchemy import create_engine
-        from sqlalchemy.orm import Session
 
         from app.models import Document, DocumentStatus, Inquiry, InquiryStatus, User
 
-        DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./wastematch.db")
-        engine = create_engine(DATABASE_URL)
-        session = Session(engine)
+        session = SessionLocal()
 
         now = datetime.utcnow()
         thirty_days_ago = now - timedelta(days=30)
@@ -181,3 +189,39 @@ def enforce_retention_policies():
     except Exception as exc:
         logger.error("retention_enforcement_failed", error=str(exc))
         raise exc
+
+
+@celery_app.task(name="archive_completed_batches_to_data_lake")
+def archive_completed_batches_to_data_lake(cutoff_days: int = 90, dry_run: bool = False):
+    """Celery cron job to offload completed/archived batches to S3 Data Lake Parquet (Issue #68)."""
+    from .archival_service import archive_completed_batches
+
+    session = SessionLocal()
+    try:
+        res = archive_completed_batches(session, cutoff_days=cutoff_days, dry_run=dry_run)
+        logger.info("data_lake_archival_task_completed", result=res)
+        return res
+    except Exception as exc:
+        session.rollback()
+        logger.error("data_lake_archival_task_failed", error=str(exc))
+        raise exc
+    finally:
+        session.close()
+
+
+@celery_app.task(name="maintain_database_partitions")
+def maintain_database_partitions():
+    """Celery cron job to ensure future PostgreSQL date partitions exist for tracking logs (Issue #68)."""
+    from .partition_service import ensure_date_partitions
+
+    session = SessionLocal()
+    try:
+        partitions = ensure_date_partitions(session, parent_table="waste_tracking_logs")
+        logger.info("partition_maintenance_task_completed", partitions=partitions)
+        return {"status": "success", "partitions": partitions}
+    except Exception as exc:
+        session.rollback()
+        logger.error("partition_maintenance_task_failed", error=str(exc))
+        raise exc
+    finally:
+        session.close()
