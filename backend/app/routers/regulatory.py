@@ -1,11 +1,11 @@
-from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.orm import Session
-from typing import List
 from uuid import UUID
 
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy.orm import Session
+
 from .. import models, schemas
-from ..database import get_db
 from ..auth import get_current_user
+from ..database import get_db
 
 router = APIRouter(prefix="/api/v1/compliance", tags=["compliance"])
 
@@ -17,7 +17,7 @@ def create_rule(rule: schemas.RegulatoryRuleCreate, db: Session = Depends(get_db
     db.refresh(db_rule)
     return db_rule
 
-@router.get("/rules", response_model=List[schemas.RegulatoryRuleResponse])
+@router.get("/rules", response_model=list[schemas.RegulatoryRuleResponse])
 def get_rules(db: Session = Depends(get_db)):
     return db.query(models.RegulatoryRule).all()
 

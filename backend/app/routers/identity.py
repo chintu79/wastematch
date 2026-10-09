@@ -1,11 +1,11 @@
-from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.orm import Session
-from typing import List
 from uuid import UUID
 
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy.orm import Session
+
 from .. import models, schemas
-from ..database import get_db
 from ..auth import get_current_user
+from ..database import get_db
 
 router = APIRouter(prefix="/api/v1", tags=["identity"])
 

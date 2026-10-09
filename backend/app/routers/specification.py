@@ -1,11 +1,11 @@
-from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.orm import Session
-from typing import List
 from uuid import UUID
 
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy.orm import Session
+
 from .. import models, schemas
-from ..database import get_db
 from ..auth import get_current_user
+from ..database import get_db
 
 router = APIRouter(prefix="/api/v1/specifications", tags=["specifications"])
 
@@ -17,7 +17,7 @@ def create_specification(spec: schemas.BuyerSpecificationCreate, db: Session = D
     db.refresh(db_spec)
     return db_spec
 
-@router.get("/", response_model=List[schemas.BuyerSpecificationResponse])
+@router.get("/", response_model=list[schemas.BuyerSpecificationResponse])
 def get_specifications(db: Session = Depends(get_db)):
     return db.query(models.BuyerSpecification).all()
 

@@ -1,7 +1,8 @@
 import os
-from celery import Celery
-import structlog
 import time
+
+import structlog
+from celery import Celery
 
 logger = structlog.get_logger()
 
