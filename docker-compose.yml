@@ -20,7 +20,21 @@ services:
     ports:
       - "8000:8000"
     environment:
+      ENVIRONMENT: ${ENVIRONMENT:-development}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
       DATABASE_URL: postgresql+psycopg2://${POSTGRES_USER:-wastematch}:${POSTGRES_PASSWORD:-password}@db:5432/${POSTGRES_DB:-wastematch}
+      # Critical configuration - compose fails fast here, and the API
+      # validates again at startup (Issue #38). Copy .env.example to .env.
+      OIDC_ISSUER: ${OIDC_ISSUER:?OIDC_ISSUER is required - copy .env.example to .env}
+      OIDC_CLIENT_ID: ${OIDC_CLIENT_ID:?OIDC_CLIENT_ID is required - copy .env.example to .env}
+      OIDC_AUDIENCE: ${OIDC_AUDIENCE:?OIDC_AUDIENCE is required - copy .env.example to .env}
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY:?JWT_SECRET_KEY is required - copy .env.example to .env}
+      # Object storage (optional in development, enforced in production)
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-}
+      AWS_REGION: ${AWS_REGION:-us-east-1}
+      S3_BUCKET_NAME: ${S3_BUCKET_NAME:-}
+      S3_ENDPOINT_URL: ${S3_ENDPOINT_URL:-}
     depends_on:
       db:
         condition: service_healthy
