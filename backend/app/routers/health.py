@@ -1,10 +1,12 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import text
 from sqlalchemy.orm import Session
+from ..auth import get_tenant_db
 
 from ..database import get_db
 
 router = APIRouter(prefix="/health", tags=["health"])
+
 
 @router.get("/liveness", status_code=status.HTTP_200_OK)
 def liveness_check():
@@ -13,8 +15,9 @@ def liveness_check():
     """
     return {"status": "ok", "message": "Application is live"}
 
+
 @router.get("/readiness", status_code=status.HTTP_200_OK)
-def readiness_check(db: Session = Depends(get_db)):
+def readiness_check(db: Session = Depends(get_tenant_db)):
     """
     Checks if the application is ready to accept requests (e.g. database is available).
     """
@@ -25,5 +28,5 @@ def readiness_check(db: Session = Depends(get_db)):
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail={"status": "not ready", "database": "disconnected", "error": str(e)}
+            detail={"status": "not ready", "database": "disconnected", "error": str(e)},
         )

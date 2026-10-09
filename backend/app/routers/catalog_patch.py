@@ -1,16 +1,18 @@
 from pydantic import BaseModel
 
+
 class BatchReserveRequest(BaseModel):
     quantity: float
+
 
 def patch_catalog():
     with open("backend/app/routers/catalog.py", "r") as f:
         content = f.read()
-    
+
     # Add reserve endpoint
     reserve_code = """
 @router.post("/batches/{batch_id}/reserve", response_model=schemas.MaterialBatchResponse)
-def reserve_batch(batch_id: UUID, req: schemas.BatchReserveRequest, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
+def reserve_batch(batch_id: UUID, req: schemas.BatchReserveRequest, db: Session = Depends(get_tenant_db), current_user: models.User = Depends(get_current_user)):
     # Pessimistic locking to prevent double-sell race conditions
     batch = db.query(models.MaterialBatch).filter(models.MaterialBatch.id == batch_id).with_for_update().first()
     
@@ -36,6 +38,7 @@ def reserve_batch(batch_id: UUID, req: schemas.BatchReserveRequest, db: Session 
         content += reserve_code
         with open("backend/app/routers/catalog.py", "w") as f:
             f.write(content)
+
 
 if __name__ == "__main__":
     patch_catalog()

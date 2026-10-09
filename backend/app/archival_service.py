@@ -43,19 +43,23 @@ def serialize_batches_to_parquet(batches: list[models.MaterialBatch]) -> bytes:
 
     for b in batches:
         props = b.properties if isinstance(b.properties, dict) else {}
-        records.append({
-            "batch_id": str(b.id),
-            "batch_reference": str(b.batch_reference),
-            "listing_id": str(b.listing_id),
-            "quantity": float(b.quantity),
-            "quantity_unit": str(b.quantity_unit),
-            "batch_status": b.batch_status.value if hasattr(b.batch_status, "value") else str(b.batch_status),
-            "properties_json": json.dumps(props),
-            "generated_at": b.generated_at.isoformat() if b.generated_at else "",
-            "sampled_at": b.sampled_at.isoformat() if b.sampled_at else "",
-            "created_at": b.created_at.isoformat() if b.created_at else "",
-            "archived_at": datetime.now(timezone.utc).isoformat(),
-        })
+        records.append(
+            {
+                "batch_id": str(b.id),
+                "batch_reference": str(b.batch_reference),
+                "listing_id": str(b.listing_id),
+                "quantity": float(b.quantity),
+                "quantity_unit": str(b.quantity_unit),
+                "batch_status": b.batch_status.value
+                if hasattr(b.batch_status, "value")
+                else str(b.batch_status),
+                "properties_json": json.dumps(props),
+                "generated_at": b.generated_at.isoformat() if b.generated_at else "",
+                "sampled_at": b.sampled_at.isoformat() if b.sampled_at else "",
+                "created_at": b.created_at.isoformat() if b.created_at else "",
+                "archived_at": datetime.now(timezone.utc).isoformat(),
+            }
+        )
 
     table = pa.Table.from_pylist(records)
     buf = io.BytesIO()
@@ -71,7 +75,10 @@ def upload_parquet_to_data_lake(
     """Upload Parquet bytes to S3 Data Lake, returning the canonical s3:// URI."""
     bucket = bucket_name or settings.S3_BUCKET_NAME or "wastematch-data-lake-dev"
     now = datetime.now(timezone.utc)
-    key = s3_key or f"data-lake/material_batches/year={now.year}/month={now.month:02d}/batch_archive_{int(now.timestamp())}_{uuid.uuid4().hex[:8]}.parquet"
+    key = (
+        s3_key
+        or f"data-lake/material_batches/year={now.year}/month={now.month:02d}/batch_archive_{int(now.timestamp())}_{uuid.uuid4().hex[:8]}.parquet"
+    )
 
     s3 = get_s3_client()
     try:
@@ -90,7 +97,12 @@ def upload_parquet_to_data_lake(
             error=str(exc),
         )
         # Offline or local dev fallback: store locally under data-lake/ directory
-        local_dir = os.path.join("data-lake", "material_batches", f"year={now.year}", f"month={now.month:02d}")
+        local_dir = os.path.join(
+            "data-lake",
+            "material_batches",
+            f"year={now.year}",
+            f"month={now.month:02d}",
+        )
         os.makedirs(local_dir, exist_ok=True)
         local_path = os.path.join(local_dir, os.path.basename(key))
         with open(local_path, "wb") as f:

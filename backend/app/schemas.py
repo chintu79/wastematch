@@ -2,13 +2,13 @@ from datetime import datetime
 from typing import Any, Generic, TypeVar, Optional
 from uuid import UUID
 
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, ConfigDict
 
 from .models import AccountStatus, FacilityStatus, OrgType, VerificationStatus
 
 
-
 T = TypeVar("T")
+
 
 class PaginatedResponse(BaseModel, Generic[T]):
     data: list[T]
@@ -16,13 +16,16 @@ class PaginatedResponse(BaseModel, Generic[T]):
     page: int
     size: int
 
+
 class UserBase(BaseModel):
     email: EmailStr
     full_name: str
     identity_provider_id: str | None = None
 
+
 class UserCreate(UserBase):
     pass
+
 
 class UserResponse(UserBase):
     id: UUID
@@ -33,6 +36,7 @@ class UserResponse(UserBase):
     class Config:
         from_attributes = True
 
+
 class FacilityBase(BaseModel):
     name: str
     address: dict[str, Any] | None = None
@@ -41,8 +45,10 @@ class FacilityBase(BaseModel):
     jurisdiction: str | None = None
     industrial_estate: str | None = None
 
+
 class FacilityCreate(FacilityBase):
     organization_id: UUID
+
 
 class FacilityResponse(FacilityBase):
     id: UUID
@@ -52,14 +58,17 @@ class FacilityResponse(FacilityBase):
     class Config:
         from_attributes = True
 
+
 class OrganizationBase(BaseModel):
     legal_name: str
     organization_type: OrgType
     registered_address: dict[str, Any] | None = None
     contact_details: dict[str, Any] | None = None
 
+
 class OrganizationCreate(OrganizationBase):
     pass
+
 
 class OrganizationResponse(OrganizationBase):
     id: UUID
@@ -70,6 +79,7 @@ class OrganizationResponse(OrganizationBase):
 
     class Config:
         from_attributes = True
+
 
 from .models import (
     BatchStatus,
@@ -86,14 +96,17 @@ class MaterialCategoryBase(BaseModel):
     description: str | None = None
     category_status: CategoryStatus = CategoryStatus.ACTIVE
 
+
 class MaterialCategoryCreate(MaterialCategoryBase):
     pass
+
 
 class MaterialCategoryResponse(MaterialCategoryBase):
     id: UUID
 
     class Config:
         from_attributes = True
+
 
 class MaterialListingBase(BaseModel):
     material_description: str
@@ -104,10 +117,12 @@ class MaterialListingBase(BaseModel):
     availability_end: datetime | None = None
     location_visibility: str | None = None
 
+
 class MaterialListingCreate(MaterialListingBase):
     producer_organization_id: UUID
     source_facility_id: UUID
     material_category_id: UUID
+
 
 class MaterialListingResponse(MaterialListingBase):
     id: UUID
@@ -121,6 +136,7 @@ class MaterialListingResponse(MaterialListingBase):
     class Config:
         from_attributes = True
 
+
 class MaterialBatchBase(BaseModel):
     batch_reference: str
     quantity: float
@@ -129,8 +145,10 @@ class MaterialBatchBase(BaseModel):
     sampled_at: datetime | None = None
     properties: dict[str, Any] = {}
 
+
 class MaterialBatchCreate(MaterialBatchBase):
     listing_id: UUID
+
 
 class MaterialBatchResponse(MaterialBatchBase):
     id: UUID
@@ -144,6 +162,7 @@ class MaterialBatchResponse(MaterialBatchBase):
     class Config:
         from_attributes = True
 
+
 class PropertyDefinitionBase(BaseModel):
     code: str
     name: str
@@ -153,8 +172,10 @@ class PropertyDefinitionBase(BaseModel):
     validation_schema: dict[str, Any] | None = None
     active: int = 1
 
+
 class PropertyDefinitionCreate(PropertyDefinitionBase):
     pass
+
 
 class PropertyDefinitionResponse(PropertyDefinitionBase):
     id: UUID
@@ -184,8 +205,10 @@ class RegulatoryRuleBase(BaseModel):
     effective_until: datetime | None = None
     source_reference: str | None = None
 
+
 class RegulatoryRuleCreate(RegulatoryRuleBase):
     pass
+
 
 class RegulatoryRuleResponse(RegulatoryRuleBase):
     id: UUID
@@ -197,6 +220,7 @@ class RegulatoryRuleResponse(RegulatoryRuleBase):
     class Config:
         from_attributes = True
 
+
 class RegulatoryEvaluationBase(BaseModel):
     candidate_id: UUID
     rule_set_version: str
@@ -204,8 +228,10 @@ class RegulatoryEvaluationBase(BaseModel):
     evidence_references: dict[str, Any] | None = None
     unresolved_conditions: dict[str, Any] | None = None
 
+
 class RegulatoryEvaluationCreate(RegulatoryEvaluationBase):
     pass
+
 
 class RegulatoryEvaluationResponse(RegulatoryEvaluationBase):
     id: UUID
@@ -216,6 +242,7 @@ class RegulatoryEvaluationResponse(RegulatoryEvaluationBase):
 
     class Config:
         from_attributes = True
+
 
 from .models import ConstraintType, MissingDataPolicy, SpecificationStatus
 
@@ -228,10 +255,12 @@ class BuyerSpecificationBase(BaseModel):
     effective_from: datetime
     effective_until: datetime | None = None
 
+
 class BuyerSpecificationCreate(BuyerSpecificationBase):
     buyer_organization_id: UUID
     receiving_facility_id: UUID
     target_category_id: UUID
+
 
 class BuyerSpecificationResponse(BuyerSpecificationBase):
     id: UUID
@@ -245,6 +274,7 @@ class BuyerSpecificationResponse(BuyerSpecificationBase):
     class Config:
         from_attributes = True
 
+
 class SpecificationConstraintBase(BaseModel):
     constraint_type: ConstraintType
     lower_bound: float | None = None
@@ -254,9 +284,11 @@ class SpecificationConstraintBase(BaseModel):
     missing_data_policy: MissingDataPolicy
     tolerance_policy: dict[str, Any] | None = None
 
+
 class SpecificationConstraintCreate(SpecificationConstraintBase):
     specification_id: UUID
     property_definition_id: UUID
+
 
 class SpecificationConstraintResponse(SpecificationConstraintBase):
     id: UUID
@@ -265,6 +297,7 @@ class SpecificationConstraintResponse(SpecificationConstraintBase):
 
     class Config:
         from_attributes = True
+
 
 from .models import TechnicalStatus
 
@@ -283,8 +316,10 @@ class MatchEvaluationBase(BaseModel):
     explanation: dict[str, Any] | None = None
     matching_algorithm_version: str
 
+
 class MatchEvaluationCreate(MatchEvaluationBase):
     pass
+
 
 class MatchEvaluationResponse(MatchEvaluationBase):
     id: UUID
@@ -293,13 +328,16 @@ class MatchEvaluationResponse(MatchEvaluationBase):
     class Config:
         from_attributes = True
 
+
 class MatchRequest(BaseModel):
     material_batch_id: UUID
     buyer_specification_id: UUID
 
+
 class DiscoverRequest(BaseModel):
     buyer_specification_id: UUID
     max_distance_km: float = 500.0
+
 
 from .models import DocumentStatus, DocumentType, InquiryStatus, SampleRequestStatus
 
@@ -310,6 +348,7 @@ class InquiryBase(BaseModel):
     producer_organization_id: UUID
     rejection_reason: str | None = None
 
+
 class InquiryCreate(InquiryBase):
     pass
 
@@ -318,16 +357,19 @@ class InquiryMessageBase(BaseModel):
     content: str
     is_system_message: bool = False
 
+
 class InquiryMessageCreate(InquiryMessageBase):
     pass
+
 
 class InquiryMessageResponse(InquiryMessageBase):
     id: UUID
     inquiry_id: UUID
     sender_user_id: UUID
     created_at: datetime
-    
+
     model_config = ConfigDict(from_attributes=True)
+
 
 class InquiryResponse(InquiryBase):
     id: UUID
@@ -338,13 +380,16 @@ class InquiryResponse(InquiryBase):
     class Config:
         from_attributes = True
 
+
 class SampleRequestBase(BaseModel):
     quantity_requested: float
     quantity_unit: str
     shipping_address: dict[str, Any]
 
+
 class SampleRequestCreate(SampleRequestBase):
     inquiry_id: UUID
+
 
 class SampleRequestResponse(SampleRequestBase):
     id: UUID
@@ -356,6 +401,7 @@ class SampleRequestResponse(SampleRequestBase):
     class Config:
         from_attributes = True
 
+
 class DocumentBase(BaseModel):
     document_type: DocumentType
     s3_key: str
@@ -364,8 +410,10 @@ class DocumentBase(BaseModel):
     content_type: str
     expires_at: datetime | None = None
 
+
 class DocumentCreate(DocumentBase):
     owner_organization_id: UUID
+
 
 class DocumentResponse(DocumentBase):
     id: UUID
@@ -377,10 +425,12 @@ class DocumentResponse(DocumentBase):
     class Config:
         from_attributes = True
 
+
 class DocumentAccessCreate(BaseModel):
     document_id: UUID
     granted_to_organization_id: UUID
     expires_at: Optional[datetime] = None
+
 
 class DocumentAccessResponse(BaseModel):
     id: UUID
@@ -394,6 +444,7 @@ class DocumentAccessResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
 
 class BatchReserveRequest(BaseModel):
     quantity: float

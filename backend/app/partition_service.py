@@ -40,8 +40,7 @@ def create_default_partition_ddl(parent_table: str) -> str:
     """Generate DDL for a catch-all DEFAULT partition in PostgreSQL."""
     part_name = get_default_partition_name(parent_table)
     return (
-        f"CREATE TABLE IF NOT EXISTS {part_name} "
-        f"PARTITION OF {parent_table} DEFAULT;"
+        f"CREATE TABLE IF NOT EXISTS {part_name} PARTITION OF {parent_table} DEFAULT;"
     )
 
 
@@ -119,7 +118,9 @@ def ensure_date_partitions(
     return created_partitions
 
 
-def list_table_partitions(session: Session, parent_table: str = "waste_tracking_logs") -> list[str]:
+def list_table_partitions(
+    session: Session, parent_table: str = "waste_tracking_logs"
+) -> list[str]:
     """List child partitions attached to a partitioned PostgreSQL table."""
     bind = session.get_bind()
     if not bind or bind.dialect.name != "postgresql":
