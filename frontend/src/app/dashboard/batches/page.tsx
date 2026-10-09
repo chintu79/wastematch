@@ -1,8 +1,16 @@
 "use client";
 
-import { Layers, Search, Filter, Plus, FileText, CheckCircle2 } from "lucide-react";
+import { useState } from "react";
+import { Layers, Search, Filter, Plus, CheckCircle2 } from "lucide-react";
 
 export default function BatchesPage() {
+  const [showToast, setShowToast] = useState(false);
+
+  const handleAddBatch = () => {
+    setShowToast(true);
+    setTimeout(() => setShowToast(false), 3000);
+  };
+
   const batches = [
     { id: "BCH-1092", material: "Copper Slag", facility: "Bhosari MIDC", volume: "120 Tons", date: "Oct 5, 2026", status: "In Stock" },
     { id: "BCH-1091", material: "PET Bottles", facility: "Chakan Plant", volume: "45 Tons", date: "Oct 2, 2026", status: "Reserved" },
@@ -10,13 +18,19 @@ export default function BatchesPage() {
   ];
 
   return (
-    <div className="flex-1 p-8 bg-gray-50 text-gray-900 max-w-7xl mx-auto h-screen">
+    <div className="flex-1 p-8 bg-gray-50 text-gray-900 max-w-7xl mx-auto min-h-screen relative">
+      {/* Toast Notification */}
+      <div className={`fixed bottom-8 right-8 z-50 bg-slate-900 text-white px-5 py-3 rounded-lg shadow-2xl flex items-center gap-3 transition-all duration-300 transform ${showToast ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0 pointer-events-none'}`}>
+        <CheckCircle2 className="w-5 h-5 text-emerald-400" />
+        <span className="font-medium text-sm">New production batch draft created!</span>
+      </div>
+
       <div className="flex justify-between items-center mb-8">
         <div>
           <h1 className="text-2xl font-bold flex items-center"><Layers className="w-6 h-6 mr-2 text-emerald-600" /> Material Batches</h1>
           <p className="text-gray-600 text-sm mt-1">Manage your physical inventory and production batches.</p>
         </div>
-        <button className="flex items-center space-x-2 bg-emerald-600 text-white px-4 py-2 rounded-md hover:bg-emerald-700 font-medium">
+        <button onClick={handleAddBatch} className="flex items-center space-x-2 bg-emerald-600 text-white px-5 py-2.5 rounded-md hover:bg-emerald-500 hover:shadow-lg active:scale-95 transition-all font-medium">
           <Plus className="w-4 h-4" /> <span>Add Batch</span>
         </button>
       </div>
@@ -25,9 +39,9 @@ export default function BatchesPage() {
         <div className="p-4 border-b border-gray-200 flex justify-between items-center bg-gray-50/50">
           <div className="relative">
             <Search className="w-4 h-4 absolute left-3 top-2.5 text-gray-400" />
-            <input type="text" placeholder="Search batches..." className="pl-9 pr-4 py-2 border border-gray-300 rounded-md text-sm w-64 focus:ring-emerald-500 focus:border-emerald-500" />
+            <input type="text" placeholder="Search batches..." className="pl-9 pr-4 py-2 border border-gray-300 rounded-md text-sm w-64 focus:ring-emerald-500 focus:border-emerald-500 transition-shadow" />
           </div>
-          <button className="flex items-center text-sm text-gray-600 font-medium hover:text-gray-900 border border-gray-300 px-3 py-2 rounded-md bg-white">
+          <button className="flex items-center text-sm text-gray-600 font-medium hover:text-gray-900 border border-gray-300 px-3 py-2 rounded-md bg-white hover:bg-gray-50 active:scale-95 transition-all">
             <Filter className="w-4 h-4 mr-2" /> Filter
           </button>
         </div>
@@ -46,7 +60,7 @@ export default function BatchesPage() {
           </thead>
           <tbody className="divide-y divide-gray-100">
             {batches.map((batch) => (
-              <tr key={batch.id} className="hover:bg-gray-50 transition-colors">
+              <tr key={batch.id} className="hover:bg-gray-50 transition-colors group">
                 <td className="px-6 py-4 font-bold text-emerald-700">{batch.id}</td>
                 <td className="px-6 py-4 font-medium">{batch.material}</td>
                 <td className="px-6 py-4 text-gray-600">{batch.facility}</td>
@@ -62,7 +76,7 @@ export default function BatchesPage() {
                   </span>
                 </td>
                 <td className="px-6 py-4 text-right">
-                  <button className="text-blue-600 hover:text-blue-800 font-medium text-xs border border-blue-200 px-3 py-1.5 rounded bg-blue-50">View Manifest</button>
+                  <button className="text-blue-600 hover:text-blue-800 hover:bg-blue-100 font-medium text-xs border border-blue-200 px-3 py-1.5 rounded bg-blue-50 transition-colors active:scale-95">View Manifest</button>
                 </td>
               </tr>
             ))}
