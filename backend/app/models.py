@@ -66,3 +66,100 @@ class Facility(Base):
     facility_status = Column(Enum(FacilityStatus), default=FacilityStatus.ACTIVE)
 
     organization = relationship("Organization", back_populates="facilities")
+
+class CategoryStatus(enum.Enum):
+    ACTIVE = "ACTIVE"
+    DEPRECATED = "DEPRECATED"
+
+class ListingStatus(enum.Enum):
+    DRAFT = "DRAFT"
+    PENDING_REVIEW = "PENDING_REVIEW"
+    PUBLISHED = "PUBLISHED"
+    PAUSED = "PAUSED"
+    CLOSED = "CLOSED"
+    REJECTED = "REJECTED"
+
+class BatchStatus(enum.Enum):
+    AVAILABLE = "AVAILABLE"
+    RESERVED = "RESERVED"
+    CONSUMED = "CONSUMED"
+
+class DataType(enum.Enum):
+    NUMERIC = "NUMERIC"
+    TEXT = "TEXT"
+    BOOLEAN = "BOOLEAN"
+
+class MeasurementVerificationStatus(enum.Enum):
+    VERIFIED = "VERIFIED"
+    SUPPLIER_REPORTED = "SUPPLIER_REPORTED"
+    ESTIMATED = "ESTIMATED"
+    UNVERIFIED = "UNVERIFIED"
+    DISPUTED = "DISPUTED"
+    EXPIRED = "EXPIRED"
+
+class MaterialCategory(Base):
+    __tablename__ = "material_categories"
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
+    code = Column(String, unique=True, index=True, nullable=False)
+    name = Column(String, nullable=False)
+    parent_category_id = Column(UUID(as_uuid=True), ForeignKey("material_categories.id"), nullable=True)
+    description = Column(String, nullable=True)
+    category_status = Column(Enum(CategoryStatus), default=CategoryStatus.ACTIVE)
+
+class MaterialListing(Base):
+    __tablename__ = "material_listings"
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
+    producer_organization_id = Column(UUID(as_uuid=True), ForeignKey("organizations.id"), nullable=False)
+    source_facility_id = Column(UUID(as_uuid=True), ForeignKey("facilities.id"), nullable=False)
+    material_category_id = Column(UUID(as_uuid=True), ForeignKey("material_categories.id"), nullable=False)
+    material_description = Column(String, nullable=False)
+    source_process = Column(String, nullable=False)
+    available_quantity = Column(Float, nullable=False)
+    quantity_unit = Column(String, nullable=False)
+    availability_start = Column(DateTime, nullable=True)
+    availability_end = Column(DateTime, nullable=True)
+    location_visibility = Column(String, nullable=True)
+    listing_status = Column(Enum(ListingStatus), default=ListingStatus.DRAFT)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+class MaterialBatch(Base):
+    __tablename__ = "material_batches"
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
+    listing_id = Column(UUID(as_uuid=True), ForeignKey("material_listings.id"), nullable=False)
+    batch_reference = Column(String, nullable=False)
+    quantity = Column(Float, nullable=False)
+    quantity_unit = Column(String, nullable=False)
+    generated_at = Column(DateTime, nullable=True)
+    sampled_at = Column(DateTime, nullable=True)
+    batch_status = Column(Enum(BatchStatus), default=BatchStatus.AVAILABLE)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+class PropertyDefinition(Base):
+    __tablename__ = "property_definitions"
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
+    code = Column(String, unique=True, nullable=False)
+    name = Column(String, nullable=False)
+    data_type = Column(Enum(DataType), nullable=False)
+    canonical_unit = Column(String, nullable=True)
+    measurement_basis_options = Column(JSON, nullable=True)
+    validation_schema = Column(JSON, nullable=True)
+    definition_version = Column(Integer, default=1)
+    active = Column(Integer, default=1)
+
+class BatchMeasurement(Base):
+    __tablename__ = "batch_measurements"
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
+    batch_id = Column(UUID(as_uuid=True), ForeignKey("material_batches.id"), nullable=False)
+    property_definition_id = Column(UUID(as_uuid=True), ForeignKey("property_definitions.id"), nullable=False)
+    numeric_value = Column(Float, nullable=True)
+    text_value = Column(String, nullable=True)
+    unit = Column(String, nullable=False)
+    measurement_basis = Column(String, nullable=True)
+    measurement_method = Column(String, nullable=True)
+    sample_reference = Column(String, nullable=True)
+    measured_at = Column(DateTime, nullable=True)
+    reported_by_organization_id = Column(UUID(as_uuid=True), ForeignKey("organizations.id"), nullable=True)
+    evidence_document_id = Column(UUID(as_uuid=True), nullable=True)
+    verification_status = Column(Enum(MeasurementVerificationStatus), default=MeasurementVerificationStatus.UNVERIFIED)
+    created_at = Column(DateTime, default=datetime.utcnow)
