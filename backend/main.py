@@ -1,27 +1,39 @@
-"""WasteMatch API entry point.
+"""WasteMatch API entry point (root application).
 
 Minimal FastAPI application created as part of the local Docker
-environment (Issue #2). Business modules described in docs/TECH_SPEC.md
-will be layered on top of this later.
+environment (Issue #2). The full modular application lives in
+backend/app/ (app.main); this root app remains the container entry point
+and now shares the validated configuration from Issue #38.
 """
 
-import os
+import logging
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
-from sqlalchemy import create_engine, text
+from sqlalchemy import text
 
-# Inside Docker Compose this is provided by the `api` service definition
-# (hostname `db`). The default allows running locally against the
-# PostgreSQL container with its published port.
-DATABASE_URL = os.getenv(
-    "DATABASE_URL",
-    "postgresql+psycopg2://wastematch:password@localhost:5432/wastematch",
-)
+from app.config import get_settings
 
-app = FastAPI(title="WasteMatch API", version="0.1.0")
+# Load and validate configuration at import time so the application fails
+# fast on missing or invalid environment variables (Issue #38).
+settings = get_settings()
 
-engine = create_engine(DATABASE_URL)
+from app.database import engine  # noqa: E402  (depends on validated settings)
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    logging.basicConfig(level=settings.LOG_LEVEL)
+    logging.getLogger(__name__).info(
+        "Configuration validated (environment=%s, log_level=%s)",
+        settings.ENVIRONMENT,
+        settings.LOG_LEVEL,
+    )
+    yield
+
+
+app = FastAPI(title="WasteMatch API", version="0.1.0", lifespan=lifespan)
 
 
 @app.get("/")

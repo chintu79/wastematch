@@ -3,6 +3,8 @@ uvicorn[standard]
 sqlalchemy
 alembic
 pydantic
+pydantic[email]
+pydantic-settings
 psycopg2-binary
 pytest
 python-jose[cryptography]
