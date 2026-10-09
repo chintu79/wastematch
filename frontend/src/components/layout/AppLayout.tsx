@@ -14,10 +14,12 @@ export const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children })
         onMobileMenuToggle={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
       />
       <div className="flex flex-1">
-        <Sidebar
-          isOpen={isMobileMenuOpen}
-          onClose={() => setIsMobileMenuOpen(false)}
-        />
+        <React.Suspense fallback={<aside className="w-64 border-r border-slate-200 bg-white hidden lg:block" />}>
+          <Sidebar
+            isOpen={isMobileMenuOpen}
+            onClose={() => setIsMobileMenuOpen(false)}
+          />
+        </React.Suspense>
         <main className="flex-1 overflow-x-hidden p-4 sm:p-6 lg:p-8">
           <div className="mx-auto max-w-7xl">
             {children}

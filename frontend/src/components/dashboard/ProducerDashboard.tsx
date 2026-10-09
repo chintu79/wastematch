@@ -1,10 +1,10 @@
-'use client';
-
 import React, { useState } from 'react';
+import Link from 'next/link';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { MaterialListingSummary, ComplianceAlert, InquirySummary } from '@/types/dashboard';
+import { getStoredListings } from '@/lib/materialData';
 import {
   Boxes,
   PlusCircle,
@@ -115,9 +115,28 @@ const RECENT_INQUIRIES: InquirySummary[] = [
 ];
 
 export const ProducerDashboard: React.FC = () => {
-  const [listings] = useState<MaterialListingSummary[]>(INITIAL_LISTINGS);
+  const [listings] = useState<MaterialListingSummary[]>(() => {
+    const stored = getStoredListings();
+    if (stored && stored.length > 0) {
+      return stored.map((s) => ({
+        id: s.id,
+        title: s.title,
+        category: s.category_name,
+        grade: s.grade,
+        quantity: s.total_volume,
+        unit: s.unit,
+        frequency: s.availability_type.replace('_', ' '),
+        regulatory_status: s.regulatory_status,
+        listing_status: s.listing_status,
+        test_report_verified: s.batches.some((b) => b.documents.some((d) => d.is_verified)),
+        facility_name: s.facility_name,
+        created_at: s.created_at.split('T')[0],
+        potential_matches_count: s.candidate_buyers_count,
+      }));
+    }
+    return INITIAL_LISTINGS;
+  });
   const [filter, setFilter] = useState<'all' | 'eligible' | 'on_hold' | 'pending_review'>('all');
-  const [showPostNotice, setShowPostNotice] = useState(false);
 
   const filteredListings = listings.filter((l) => {
     if (filter === 'all') return true;
@@ -144,45 +163,20 @@ export const ProducerDashboard: React.FC = () => {
         </div>
 
         <div className="flex items-center gap-2.5">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => alert('Lab report upload module opens in #10 Material Listing workflow.')}
-          >
-            <FileCheck2 className="h-4 w-4" />
-            <span>Upload Lab Certificate</span>
-          </Button>
-          <Button
-            variant="primary"
-            size="sm"
-            onClick={() => setShowPostNotice(true)}
-          >
-            <PlusCircle className="h-4 w-4" />
-            <span>Post Material Listing</span>
-          </Button>
+          <Link href="/dashboard/listings">
+            <Button variant="outline" size="sm">
+              <Boxes className="h-4 w-4 mr-1" />
+              <span>Catalog Inventory</span>
+            </Button>
+          </Link>
+          <Link href="/dashboard/listings/new">
+            <Button variant="primary" size="sm">
+              <PlusCircle className="h-4 w-4 mr-1" />
+              <span>Post Material Listing</span>
+            </Button>
+          </Link>
         </div>
       </div>
-
-      {showPostNotice && (
-        <div className="rounded-xl border border-emerald-300 bg-emerald-50/90 p-4 text-emerald-950 flex items-start justify-between shadow-xs">
-          <div className="flex gap-3">
-            <Sparkles className="h-5 w-5 text-emerald-700 mt-0.5 shrink-0" />
-            <div>
-              <p className="text-xs font-bold text-emerald-900">Next Step: Issue #10 Material Listing Form</p>
-              <p className="text-xs text-emerald-800 mt-0.5">
-                The full multi-step Material Listing builder (Physical & Chemical property matrices, MPCB category picker, and batch trackers) is scheduled under <strong>#10 [Frontend] Build Material Listing UI</strong>.
-              </p>
-            </div>
-          </div>
-          <button
-            type="button"
-            onClick={() => setShowPostNotice(false)}
-            className="text-xs font-semibold text-emerald-800 hover:text-emerald-950 underline cursor-pointer"
-          >
-            Dismiss
-          </button>
-        </div>
-      )}
 
       {/* KPI Stat Cards */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -421,20 +415,16 @@ export const ProducerDashboard: React.FC = () => {
                   </td>
                   <td className="px-6 py-4 text-right">
                     <div className="flex items-center justify-end gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => alert(`View details for ${item.title}`)}
-                      >
-                        Inspect
-                      </Button>
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        onClick={() => alert(`Review matches for ${item.title}`)}
-                      >
-                        Matches
-                      </Button>
+                      <Link href={`/dashboard/listings/${item.id}`}>
+                        <Button variant="outline" size="sm">
+                          Inspect
+                        </Button>
+                      </Link>
+                      <Link href="/dashboard/matches">
+                        <Button variant="secondary" size="sm">
+                          Matches
+                        </Button>
+                      </Link>
                     </div>
                   </td>
                 </tr>
