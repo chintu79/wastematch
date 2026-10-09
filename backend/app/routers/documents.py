@@ -7,7 +7,7 @@ from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
 from sqlalchemy.orm import Session
 
 from .. import models, schemas
-from ..auth import get_current_user
+from ..auth import get_current_user, get_tenant_db
 from ..config import get_settings
 from ..database import get_db
 
@@ -61,7 +61,7 @@ def upload_file_direct(
     document_type: models.DocumentType,
     owner_organization_id: UUID,
     file: UploadFile = File(...),
-    db: Session = Depends(get_db),
+    db: Session = Depends(get_tenant_db),
     current_user: models.User = Depends(get_current_user)
 ):
     """
@@ -97,7 +97,7 @@ def upload_file_direct(
     return db_doc
 
 @router.post("/", response_model=schemas.DocumentResponse, status_code=status.HTTP_201_CREATED)
-def upload_document_metadata(doc: schemas.DocumentCreate, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
+def upload_document_metadata(doc: schemas.DocumentCreate, db: Session = Depends(get_tenant_db), current_user: models.User = Depends(get_current_user)):
     """
     Register document metadata after a successful frontend direct-to-S3 upload using the presigned URL.
     """
@@ -108,14 +108,14 @@ def upload_document_metadata(doc: schemas.DocumentCreate, db: Session = Depends(
     return db_doc
 
 @router.get("/{document_id}", response_model=schemas.DocumentResponse)
-def get_document(document_id: UUID, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
+def get_document(document_id: UUID, db: Session = Depends(get_tenant_db), current_user: models.User = Depends(get_current_user)):
     doc = db.query(models.Document).filter(models.Document.id == document_id, models.Document.is_deleted == False).first()
     if not doc:
         raise HTTPException(status_code=404, detail="Document not found")
     return doc
 
 @router.post("/{document_id}/access", response_model=schemas.DocumentAccessResponse)
-def grant_document_access(document_id: UUID, access_req: schemas.DocumentAccessCreate, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
+def grant_document_access(document_id: UUID, access_req: schemas.DocumentAccessCreate, db: Session = Depends(get_tenant_db), current_user: models.User = Depends(get_current_user)):
     doc = db.query(models.Document).filter(models.Document.id == document_id, models.Document.is_deleted == False).first()
     if not doc:
         raise HTTPException(status_code=404, detail="Document not found")
@@ -132,7 +132,7 @@ def grant_document_access(document_id: UUID, access_req: schemas.DocumentAccessC
     return access
 
 @router.delete("/{document_id}/access/{access_id}")
-def revoke_document_access(document_id: UUID, access_id: UUID, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
+def revoke_document_access(document_id: UUID, access_id: UUID, db: Session = Depends(get_tenant_db), current_user: models.User = Depends(get_current_user)):
     access = db.query(models.DocumentAccess).filter(
         models.DocumentAccess.id == access_id,
         models.DocumentAccess.document_id == document_id
@@ -148,7 +148,7 @@ def revoke_document_access(document_id: UUID, access_id: UUID, db: Session = Dep
     return {"status": "success", "message": "Access revoked successfully"}
 
 @router.delete("/{document_id}")
-def delete_document(document_id: UUID, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
+def delete_document(document_id: UUID, db: Session = Depends(get_tenant_db), current_user: models.User = Depends(get_current_user)):
     doc = db.query(models.Document).filter(models.Document.id == document_id, models.Document.is_deleted == False).first()
     if not doc:
         raise HTTPException(status_code=404, detail="Document not found")
