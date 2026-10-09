@@ -285,3 +285,64 @@ class MatchEvaluation(Base):
     explanation = Column(JSON, nullable=True)
     matching_algorithm_version = Column(String, nullable=False)
     evaluated_at = Column(DateTime, default=datetime.utcnow)
+
+class InquiryStatus(enum.Enum):
+    OPEN = "OPEN"
+    IN_PROGRESS = "IN_PROGRESS"
+    QUALIFIED = "QUALIFIED"
+    REJECTED = "REJECTED"
+    CLOSED = "CLOSED"
+
+class SampleRequestStatus(enum.Enum):
+    REQUESTED = "REQUESTED"
+    SHIPPED = "SHIPPED"
+    RECEIVED = "RECEIVED"
+    TESTING = "TESTING"
+    COMPLETED = "COMPLETED"
+
+class DocumentType(enum.Enum):
+    TEST_REPORT = "TEST_REPORT"
+    CERTIFICATE = "CERTIFICATE"
+    PHOTOGRAPH = "PHOTOGRAPH"
+    CONTRACT = "CONTRACT"
+    OTHER = "OTHER"
+
+class DocumentStatus(enum.Enum):
+    ACTIVE = "ACTIVE"
+    EXPIRED = "EXPIRED"
+    INVALID = "INVALID"
+
+class Inquiry(Base):
+    __tablename__ = "inquiries"
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
+    match_id = Column(UUID(as_uuid=True), ForeignKey("match_evaluations.id"), nullable=False)
+    buyer_organization_id = Column(UUID(as_uuid=True), ForeignKey("organizations.id"), nullable=False)
+    producer_organization_id = Column(UUID(as_uuid=True), ForeignKey("organizations.id"), nullable=False)
+    inquiry_status = Column(Enum(InquiryStatus), default=InquiryStatus.OPEN)
+    rejection_reason = Column(String, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+class SampleRequest(Base):
+    __tablename__ = "sample_requests"
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
+    inquiry_id = Column(UUID(as_uuid=True), ForeignKey("inquiries.id"), nullable=False)
+    request_status = Column(Enum(SampleRequestStatus), default=SampleRequestStatus.REQUESTED)
+    quantity_requested = Column(Float, nullable=False)
+    quantity_unit = Column(String, nullable=False)
+    shipping_address = Column(JSON, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+class Document(Base):
+    __tablename__ = "documents"
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
+    owner_organization_id = Column(UUID(as_uuid=True), ForeignKey("organizations.id"), nullable=False)
+    document_type = Column(Enum(DocumentType), nullable=False)
+    s3_key = Column(String, nullable=False)
+    original_filename = Column(String, nullable=False)
+    file_size = Column(Integer, nullable=False)
+    content_type = Column(String, nullable=False)
+    document_status = Column(Enum(DocumentStatus), default=DocumentStatus.ACTIVE)
+    uploaded_at = Column(DateTime, default=datetime.utcnow)
+    expires_at = Column(DateTime, nullable=True)

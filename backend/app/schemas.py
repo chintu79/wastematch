@@ -292,3 +292,61 @@ class MatchEvaluationResponse(MatchEvaluationBase):
 class MatchRequest(BaseModel):
     material_batch_id: UUID
     buyer_specification_id: UUID
+
+from .models import InquiryStatus, SampleRequestStatus, DocumentType, DocumentStatus
+
+class InquiryBase(BaseModel):
+    match_id: UUID
+    buyer_organization_id: UUID
+    producer_organization_id: UUID
+    rejection_reason: Optional[str] = None
+
+class InquiryCreate(InquiryBase):
+    pass
+
+class InquiryResponse(InquiryBase):
+    id: UUID
+    inquiry_status: InquiryStatus
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
+
+class SampleRequestBase(BaseModel):
+    quantity_requested: float
+    quantity_unit: str
+    shipping_address: Dict[str, Any]
+
+class SampleRequestCreate(SampleRequestBase):
+    inquiry_id: UUID
+
+class SampleRequestResponse(SampleRequestBase):
+    id: UUID
+    inquiry_id: UUID
+    request_status: SampleRequestStatus
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
+
+class DocumentBase(BaseModel):
+    document_type: DocumentType
+    s3_key: str
+    original_filename: str
+    file_size: int
+    content_type: str
+    expires_at: Optional[datetime] = None
+
+class DocumentCreate(DocumentBase):
+    owner_organization_id: UUID
+
+class DocumentResponse(DocumentBase):
+    id: UUID
+    owner_organization_id: UUID
+    document_status: DocumentStatus
+    uploaded_at: datetime
+
+    class Config:
+        from_attributes = True
