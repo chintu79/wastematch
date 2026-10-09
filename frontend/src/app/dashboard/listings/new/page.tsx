@@ -138,7 +138,7 @@ export default function NewListingWizard() {
               <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2">
                 <h2 className="text-lg font-bold border-b pb-2 mb-4">2. Technical Properties</h2>
                 <div className="bg-blue-50 border-l-4 border-blue-500 p-4 mb-4">
-                  <p className="text-sm text-blue-700">These fields are dynamically loaded based on the "Plastics" category.</p>
+                  <p className="text-sm text-blue-700">These fields are dynamically loaded based on the &quot;Plastics&quot; category.</p>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>

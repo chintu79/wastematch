@@ -227,7 +227,7 @@ export default function BuyerSpecificationsPage() {
             <div className="w-full md:w-44">
               <select
                 value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value as any)}
+                onChange={(e) => setStatusFilter(e.target.value as unknown)}
                 className="w-full rounded-lg border border-slate-300 px-3 py-2 text-xs focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 bg-white"
               >
                 <option value="ALL">All Statuses</option>

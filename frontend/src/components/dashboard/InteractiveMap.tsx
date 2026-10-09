@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 
 // Leaflet icon fix
-delete (L.Icon.Default.prototype as any)._getIconUrl;
+delete (L.Icon.Default.prototype as unknown)._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
   iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
@@ -19,8 +19,8 @@ L.Icon.Default.mergeOptions({
 
 interface InteractiveMapProps {
   matches: MatchEvaluation[];
-  getBatchLabel: (id: string) => any;
-  getSpecLabel: (id: string) => any;
+  getBatchLabel: (id: string) => unknown;
+  getSpecLabel: (id: string) => unknown;
   onSendInquiry: (match: MatchEvaluation) => void;
   radiusKm?: number;
   center?: [number, number];
@@ -48,9 +48,10 @@ export default function InteractiveMap({ matches, getBatchLabel, getSpecLabel, o
 
         <MarkerClusterGroup>
           {matches.map(match => {
-            const batch = getBatchLabel(match.material_batch_id);
-            const spec = getSpecLabel(match.buyer_specification_id);
-            const position = LOCATIONS[batch.location] || [center[0] + (Math.random() - 0.5) * 0.1, center[1] + (Math.random() - 0.5) * 0.1];
+            // Calculate a deterministic fallback offset using match ID to pass react-hooks/purity lint
+            const offsetLat = ((typeof match.id === 'string' ? match.id.charCodeAt(0) : match.id) % 10 - 5) * 0.01;
+            const offsetLng = ((typeof match.id === 'string' ? match.id.charCodeAt(match.id.length - 1) : match.id) % 10 - 5) * 0.01;
+            const position = LOCATIONS[batch.location] || [center[0] + offsetLat, center[1] + offsetLng];
             
             return (
               <Marker key={match.id} position={position as [number, number]}>

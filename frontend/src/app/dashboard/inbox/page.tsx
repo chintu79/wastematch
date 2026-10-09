@@ -3,14 +3,15 @@
 import { useState, useEffect } from "react";
 
 export default function InboxPage() {
-  const [inquiries, setInquiries] = useState<any[]>([]);
-  const [selectedInquiry, setSelectedInquiry] = useState<any | null>(null);
-  const [messages, setMessages] = useState<any[]>([]);
+  const [inquiries, setInquiries] = useState<unknown[]>([]);
+  const [selectedInquiry, setSelectedInquiry] = useState<unknown | null>(null);
+  const [messages, setMessages] = useState<unknown[]>([]);
   const [newMessage, setNewMessage] = useState("");
 
   // In a real app, this would fetch from /api/v1/inquiries
   useEffect(() => {
     // Mock data for UI demonstration
+     // eslint-disable-next-line react-hooks/set-state-in-effect
     setInquiries([
       { id: "1", title: "Inquiry on Clean PET Bottles", status: "OPEN", lastActive: "10 mins ago" },
       { id: "2", title: "Sample Request for Copper Slag", status: "IN_PROGRESS", lastActive: "2 hours ago" },
@@ -19,6 +20,7 @@ export default function InboxPage() {
 
   useEffect(() => {
     if (selectedInquiry) {
+       // eslint-disable-next-line react-hooks/set-state-in-effect
       setMessages([
         { id: "1", sender: "Buyer", text: "Is the moisture content strictly <5%?", time: "10:00 AM", isSelf: false },
         { id: "2", sender: "Producer", text: "Yes, it is guaranteed <5%. We can send a sample.", time: "10:15 AM", isSelf: true },

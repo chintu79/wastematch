@@ -156,7 +156,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onMobileMenuToggle, isMobileMenu
             </Link>
             {user && (role === 'waste_supplier' || role === 'recycler') && (
               <Link 
-                href="/dashboard/producer/listings/new" 
+                href="/dashboard/listings/new" 
                 className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${pathname.includes('/listings/new') ? 'bg-emerald-50 text-emerald-700' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'}`}
               >
                 List Material
@@ -334,7 +334,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onMobileMenuToggle, isMobileMenu
           </button>
           
           {user && (role === 'waste_supplier' || role === 'recycler') && (
-            <Link href="/dashboard/producer/listings/new" className="flex flex-col items-center justify-center -mt-5 relative z-50">
+            <Link href="/dashboard/listings/new" className="flex flex-col items-center justify-center -mt-5 relative z-50">
               <div className="bg-emerald-600 text-white p-3 rounded-full shadow-lg shadow-emerald-600/30">
                 <PlusSquare className="h-5 w-5" />
               </div>

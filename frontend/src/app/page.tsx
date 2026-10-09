@@ -65,9 +65,9 @@ export default function MarketplaceHome() {
           </div>
 
           <div className="flex items-center justify-center gap-6 text-sm font-medium text-slate-600">
-            <Link href="/dashboard/buyer" className="hover:text-green-700 transition-colors">Browse materials</Link>
+            <Link href="/dashboard/matches" className="hover:text-green-700 transition-colors">Browse materials</Link>
             <span className="text-slate-300">|</span>
-            <Link href="/dashboard/producer/listings/new" className="hover:text-green-700 transition-colors">List your material</Link>
+            <Link href="/dashboard/listings/new" className="hover:text-green-700 transition-colors">List your material</Link>
           </div>
         </div>
       </section>
@@ -80,7 +80,7 @@ export default function MarketplaceHome() {
             {CATEGORIES.map((cat, i) => {
               const Icon = cat.icon;
               return (
-                <Link key={i} href="/dashboard/buyer" className="group flex flex-col items-center p-6 border border-slate-200 rounded-xl hover:shadow-md hover:border-green-300 transition-all text-center">
+                <Link key={i} href="/dashboard/matches" className="group flex flex-col items-center p-6 border border-slate-200 rounded-xl hover:shadow-md hover:border-green-300 transition-all text-center">
                   <div className={`w-16 h-16 rounded-full flex items-center justify-center mb-4 ${cat.color} group-hover:scale-110 transition-transform`}>
                     <Icon className="w-8 h-8" />
                   </div>
@@ -97,7 +97,7 @@ export default function MarketplaceHome() {
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-end mb-8">
             <h2 className="text-2xl font-bold text-slate-900">Recently listed materials</h2>
-            <Link href="/dashboard/buyer" className="text-sm font-semibold text-green-700 hover:text-green-800 flex items-center">
+            <Link href="/dashboard/matches" className="text-sm font-semibold text-green-700 hover:text-green-800 flex items-center">
               View all <ChevronRight className="w-4 h-4 ml-1" />
             </Link>
           </div>
@@ -167,7 +167,7 @@ export default function MarketplaceHome() {
         <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-3xl font-bold mb-4">Have a material to recover or sell?</h2>
           <p className="text-slate-300 mb-8 text-lg">Join hundreds of industrial plants turning waste costs into revenue streams.</p>
-          <Link href="/dashboard/producer/listings/new" className="inline-flex items-center justify-center gap-2 rounded-md bg-green-600 px-8 py-4 text-base font-bold text-white hover:bg-green-500 transition-colors">
+          <Link href="/dashboard/listings/new" className="inline-flex items-center justify-center gap-2 rounded-md bg-green-600 px-8 py-4 text-base font-bold text-white hover:bg-green-500 transition-colors">
             List your material <ArrowRight className="w-5 h-5" />
           </Link>
         </div>

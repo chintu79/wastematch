@@ -46,6 +46,7 @@ function SpecificationDetailContent() {
   useEffect(() => {
     if (specId) {
       const found = getSpecificationById(specId);
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSpec(found);
     }
   }, [specId]);

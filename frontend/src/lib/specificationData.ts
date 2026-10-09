@@ -382,7 +382,7 @@ export function getDefaultConstraintsForCategory(categoryCode: MaterialCategoryC
     let lower: number | undefined;
     let upper: number | undefined;
     let constraintType: ConstraintType = p.is_mandatory ? 'HARD_LIMIT' : 'PREFERRED_RANGE';
-    let missingPolicy: MissingDataPolicy = p.is_mandatory ? 'HOLD' : 'MANUAL_REVIEW';
+    const missingPolicy: MissingDataPolicy = p.is_mandatory ? 'HOLD' : 'MANUAL_REVIEW';
 
     // Smart default bounds based on property name
     if (p.name.includes('Purity') || p.name.includes('SiO2') || p.name.includes('Assay')) {

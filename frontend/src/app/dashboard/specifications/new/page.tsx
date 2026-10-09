@@ -127,7 +127,7 @@ export default function NewSpecificationWizard() {
                     value={formData.intendedUse}
                     onChange={e => setFormData({...formData, intendedUse: e.target.value})}
                   />
-                  <p className="text-xs text-gray-500 mt-2">This helps our algorithm understand the context of your requirements and suggest alternative materials if a direct match isn't found.</p>
+                  <p className="text-xs text-gray-500 mt-2">This helps our algorithm understand the context of your requirements and suggest alternative materials if a direct match isn&apos;t found.</p>
                 </div>
               </div>
             )}

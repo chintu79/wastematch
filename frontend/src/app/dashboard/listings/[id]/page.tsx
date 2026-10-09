@@ -41,7 +41,7 @@ export default function MaterialListingDetailPage() {
       {/* Top Nav */}
       <div className="bg-white border-b border-gray-200 sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
-          <Link href="/dashboard/buyer/matches" className="flex items-center text-sm font-medium text-gray-500 hover:text-gray-900">
+          <Link href="/dashboard/matches" className="flex items-center text-sm font-medium text-gray-500 hover:text-gray-900">
             <ArrowLeft className="w-4 h-4 mr-1" /> Back to matches
           </Link>
           <div className="flex items-center space-x-3">
@@ -295,7 +295,7 @@ export default function MaterialListingDetailPage() {
 }
 
 // Re-implement the lucide Bookmark icon since it wasn't imported above
-function Bookmark(props: any) {
+function Bookmark(props: Record<string, unknown>) {
   return (
     <svg
       {...props}

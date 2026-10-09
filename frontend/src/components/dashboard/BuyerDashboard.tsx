@@ -89,8 +89,8 @@ export default function BuyerDashboard() {
               Saved Materials
             </h2>
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 text-center text-gray-500">
-              <p className="text-sm">You haven't saved any materials yet.</p>
-              <Link href="/dashboard/buyer/matches" className="text-blue-600 text-sm font-medium hover:underline mt-2 inline-block">Browse materials</Link>
+              <p className="text-sm">You haven&apos;t saved any materials yet.</p>
+              <Link href="/dashboard/matches" className="text-blue-600 text-sm font-medium hover:underline mt-2 inline-block">Browse materials</Link>
             </div>
           </section>
 

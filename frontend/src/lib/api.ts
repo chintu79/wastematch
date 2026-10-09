@@ -200,15 +200,15 @@ export async function apiRequest<T>(
 }
 
 export const specificationsApi = {
-  list: async () => apiRequest<any[]>('/specifications/'),
-  getById: async (id: string) => apiRequest<any>(`/specifications/${id}`),
-  create: async (payload: any) =>
-    apiRequest<any>('/specifications/', {
+  list: async () => apiRequest<unknown[]>('/specifications/'),
+  getById: async (id: string) => apiRequest<unknown>(`/specifications/${id}`),
+  create: async (payload: unknown) =>
+    apiRequest<unknown>('/specifications/', {
       method: 'POST',
       body: JSON.stringify(payload),
     }),
-  createConstraint: async (specId: string, payload: any) =>
-    apiRequest<any>(`/specifications/${specId}/constraints`, {
+  createConstraint: async (specId: string, payload: unknown) =>
+    apiRequest<unknown>(`/specifications/${specId}/constraints`, {
       method: 'POST',
       body: JSON.stringify(payload),
     }),

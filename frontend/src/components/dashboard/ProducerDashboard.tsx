@@ -11,7 +11,7 @@ export default function ProducerDashboard() {
           <h1 className="text-2xl font-bold">Welcome back, Industrial Metals Corp.</h1>
           <p className="text-gray-600">Here is your active material listing activity.</p>
         </div>
-        <Link href="/dashboard/producer/listings/new" className="flex items-center space-x-2 bg-green-600 text-white px-5 py-2.5 rounded-md hover:bg-green-700 shadow-sm font-medium">
+        <Link href="/dashboard/listings/new" className="flex items-center space-x-2 bg-green-600 text-white px-5 py-2.5 rounded-md hover:bg-green-700 shadow-sm font-medium">
           <PlusCircle className="w-5 h-5" />
           <span>New Material Listing</span>
         </Link>
@@ -34,7 +34,7 @@ export default function ProducerDashboard() {
                     <span className="bg-blue-100 text-blue-800 text-xs font-semibold px-2 py-0.5 rounded">New Message</span>
                     <h3 className="font-semibold text-gray-900">Inquiry on Copper Slag Batch #442</h3>
                   </div>
-                  <p className="text-sm text-gray-600">EcoRecycle Inc: "Can you provide the latest moisture test results?"</p>
+                  <p className="text-sm text-gray-600">EcoRecycle Inc: &quot;Can you provide the latest moisture test results?&quot;</p>
                 </div>
                 <Link href="/dashboard/inbox" className="text-blue-600 font-medium text-sm whitespace-nowrap bg-blue-50 px-3 py-1 rounded hover:bg-blue-100">Reply</Link>
               </div>
@@ -55,7 +55,7 @@ export default function ProducerDashboard() {
           <section>
             <div className="flex justify-between items-end mb-4">
               <h2 className="text-lg font-bold text-gray-800">Active Listings</h2>
-              <Link href="/dashboard/producer/listings" className="text-sm text-green-600 font-medium hover:underline">View all</Link>
+              <Link href="/dashboard/listings" className="text-sm text-green-600 font-medium hover:underline">View all</Link>
             </div>
             
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 divide-y divide-gray-100">
