@@ -53,3 +53,52 @@ def get_match(match_id: UUID, db: Session = Depends(get_db), current_user: model
     if not db_match:
         raise HTTPException(status_code=404, detail="Match not found")
     return db_match
+
+@router.post("/discover")
+def discover_candidates(req: schemas.DiscoverRequest, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
+    """
+    Find commercially viable material batches by filtering out facilities beyond a geographic radius
+    using PostGIS ST_DWithin / ST_DistanceSphere.
+    """
+    from sqlalchemy import func
+    
+    spec = db.query(models.BuyerSpecification).filter(models.BuyerSpecification.id == req.buyer_specification_id).first()
+    if not spec:
+        raise HTTPException(status_code=404, detail="Specification not found")
+        
+    receiving_facility = db.query(models.Facility).filter(models.Facility.id == spec.receiving_facility_id).first()
+    if not receiving_facility or receiving_facility.coordinates is None:
+        raise HTTPException(status_code=400, detail="Receiving facility coordinates not set")
+
+    # ST_DistanceSphere returns distance in meters
+    max_dist_meters = req.max_distance_km * 1000.0
+
+    # Query matching MaterialBatches
+    candidates = db.query(
+        models.MaterialBatch.id.label("batch_id"),
+        models.MaterialBatch.batch_reference,
+        models.Facility.name.label("facility_name"),
+        func.ST_DistanceSphere(models.Facility.coordinates, receiving_facility.coordinates).label("distance_meters")
+    ).join(
+        models.MaterialListing, models.MaterialBatch.listing_id == models.MaterialListing.id
+    ).join(
+        models.Facility, models.MaterialListing.source_facility_id == models.Facility.id
+    ).filter(
+        models.MaterialListing.material_category_id == spec.target_category_id,
+        models.Facility.coordinates.isnot(None),
+        func.ST_DWithin(models.Facility.coordinates, receiving_facility.coordinates, req.max_distance_km / 111.32)
+    ).all()
+
+    return {
+        "specification_id": spec.id,
+        "max_distance_km": req.max_distance_km,
+        "viable_candidates": [
+            {
+                "batch_id": c.batch_id,
+                "batch_reference": c.batch_reference,
+                "facility_name": c.facility_name,
+                "distance_km": round(c.distance_meters / 1000.0, 2)
+            }
+            for c in candidates
+        ]
+    }

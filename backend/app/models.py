@@ -57,6 +57,8 @@ class Organization(Base):
 
     facilities = relationship("Facility", back_populates="organization")
 
+from geoalchemy2 import Geometry
+
 class Facility(Base):
     __tablename__ = "facilities"
 
@@ -66,6 +68,7 @@ class Facility(Base):
     address = Column(JSON, nullable=True)
     latitude = Column(Float, nullable=True)
     longitude = Column(Float, nullable=True)
+    coordinates = Column(Geometry(geometry_type='POINT', srid=4326), nullable=True)
     jurisdiction = Column(String, nullable=True)
     industrial_estate = Column(String, nullable=True)
     facility_status = Column(Enum(FacilityStatus), default=FacilityStatus.ACTIVE)

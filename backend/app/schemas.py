@@ -285,6 +285,10 @@ class MatchRequest(BaseModel):
     material_batch_id: UUID
     buyer_specification_id: UUID
 
+class DiscoverRequest(BaseModel):
+    buyer_specification_id: UUID
+    max_distance_km: float = 500.0
+
 from .models import DocumentStatus, DocumentType, InquiryStatus, SampleRequestStatus
 
 
