@@ -163,3 +163,55 @@ class BatchMeasurement(Base):
     evidence_document_id = Column(UUID(as_uuid=True), nullable=True)
     verification_status = Column(Enum(MeasurementVerificationStatus), default=MeasurementVerificationStatus.UNVERIFIED)
     created_at = Column(DateTime, default=datetime.utcnow)
+
+class JurisdictionLevel(enum.Enum):
+    LOCAL = "LOCAL"
+    STATE = "STATE"
+    NATIONAL = "NATIONAL"
+    INTERNATIONAL = "INTERNATIONAL"
+
+class RuleReviewStatus(enum.Enum):
+    DRAFT = "DRAFT"
+    APPROVED = "APPROVED"
+    DEPRECATED = "DEPRECATED"
+
+class EligibilityStatus(enum.Enum):
+    ELIGIBLE = "ELIGIBLE"
+    HOLD = "HOLD"
+    INELIGIBLE = "INELIGIBLE"
+
+class EvaluationReviewStatus(enum.Enum):
+    PENDING_REVIEW = "PENDING_REVIEW"
+    APPROVED = "APPROVED"
+    REJECTED = "REJECTED"
+
+class RegulatoryRule(Base):
+    __tablename__ = "regulatory_rules"
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
+    rule_code = Column(String, unique=True, nullable=False)
+    title = Column(String, nullable=False)
+    legal_instrument = Column(String, nullable=False)
+    legal_clause_reference = Column(String, nullable=False)
+    jurisdiction_level = Column(Enum(JurisdictionLevel), nullable=False)
+    applicability_definition = Column(JSON, nullable=False)
+    required_conditions = Column(JSON, nullable=False)
+    effective_from = Column(DateTime, nullable=False)
+    effective_until = Column(DateTime, nullable=True)
+    review_status = Column(Enum(RuleReviewStatus), default=RuleReviewStatus.DRAFT)
+    source_reference = Column(String, nullable=True)
+    reviewed_by = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
+    reviewed_at = Column(DateTime, nullable=True)
+    rule_version = Column(Integer, default=1)
+
+class RegulatoryEvaluation(Base):
+    __tablename__ = "regulatory_evaluations"
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
+    candidate_id = Column(UUID(as_uuid=True), nullable=False)
+    rule_set_version = Column(String, nullable=False)
+    eligibility_status = Column(Enum(EligibilityStatus), default=EligibilityStatus.HOLD)
+    decision_reasons = Column(JSON, nullable=True)
+    evidence_references = Column(JSON, nullable=True)
+    unresolved_conditions = Column(JSON, nullable=True)
+    evaluated_at = Column(DateTime, default=datetime.utcnow)
+    reviewer_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
+    review_status = Column(Enum(EvaluationReviewStatus), default=EvaluationReviewStatus.PENDING_REVIEW)
