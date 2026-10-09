@@ -1,2 +1,3 @@
-pytest\nhttpx\nruff
-pytest-cov
+pytest
+httpx
+ruff

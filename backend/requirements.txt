@@ -15,3 +15,5 @@ structlog
 asgi-correlation-id
 celery
 redis
+PyJWT[crypto]
+requests
