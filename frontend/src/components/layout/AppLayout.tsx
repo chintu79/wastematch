@@ -9,10 +9,12 @@ export const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children })
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col text-slate-900">
-      <Navbar
-        isMobileMenuOpen={isMobileMenuOpen}
-        onMobileMenuToggle={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-      />
+      <React.Suspense fallback={<header className="h-16 w-full bg-white border-b border-slate-200 sticky top-0 z-30" />}>
+        <Navbar
+          isMobileMenuOpen={isMobileMenuOpen}
+          onMobileMenuToggle={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+        />
+      </React.Suspense>
       <div className="flex flex-1">
         <React.Suspense fallback={<aside className="w-64 border-r border-slate-200 bg-white hidden lg:block" />}>
           <Sidebar
@@ -20,7 +22,7 @@ export const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children })
             onClose={() => setIsMobileMenuOpen(false)}
           />
         </React.Suspense>
-        <main className="flex-1 overflow-x-hidden p-4 sm:p-6 lg:p-8">
+        <main className="flex-1 overflow-x-hidden p-4 pb-20 sm:p-6 lg:p-8 lg:pb-8">
           <div className="mx-auto max-w-7xl">
             {children}
           </div>

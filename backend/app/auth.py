@@ -78,3 +78,12 @@ def require_role(role_name: str):
         # In a full system, you would check an organization-role junction table
         return current_user
     return role_checker
+
+
+from sqlalchemy import text
+
+def get_tenant_db(db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
+    """Yields a database session with the PostgreSQL RLS tenant ID set."""
+    if db.get_bind().dialect.name == "postgresql" and current_user and current_user.organization_id:
+        db.execute(text(f"SET LOCAL wastematch.current_tenant_id = '{current_user.organization_id}'"))
+    yield db

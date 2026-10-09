@@ -1,11 +1,20 @@
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any, Generic, TypeVar, Optional
 from uuid import UUID
 
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, Field
 
 from .models import AccountStatus, FacilityStatus, OrgType, VerificationStatus
 
+
+
+T = TypeVar("T")
+
+class PaginatedResponse(BaseModel, Generic[T]):
+    data: list[T]
+    total: int
+    page: int
+    size: int
 
 class UserBase(BaseModel):
     email: EmailStr
@@ -304,6 +313,22 @@ class InquiryBase(BaseModel):
 class InquiryCreate(InquiryBase):
     pass
 
+
+class InquiryMessageBase(BaseModel):
+    content: str
+    is_system_message: bool = False
+
+class InquiryMessageCreate(InquiryMessageBase):
+    pass
+
+class InquiryMessageResponse(InquiryMessageBase):
+    id: UUID
+    inquiry_id: UUID
+    sender_user_id: UUID
+    created_at: datetime
+    
+    model_config = ConfigDict(from_attributes=True)
+
 class InquiryResponse(InquiryBase):
     id: UUID
     inquiry_status: InquiryStatus
@@ -370,38 +395,5 @@ class DocumentAccessResponse(BaseModel):
     class Config:
         from_attributes = True
 
-
-class WasteTrackingLogBase(BaseModel):
-    batch_id: Optional[UUID] = None
-    listing_id: Optional[UUID] = None
-    organization_id: Optional[UUID] = None
-    facility_id: Optional[UUID] = None
-    event_type: str
-    summary: str
-    payload: dict[str, Any] = {}
-
-
-class WasteTrackingLogCreate(WasteTrackingLogBase):
-    pass
-
-
-class WasteTrackingLogResponse(WasteTrackingLogBase):
-    id: UUID
-    created_at: datetime
-
-    class Config:
-        from_attributes = True
-
-
-class BatchArchivalRequest(BaseModel):
-    batch_ids: Optional[list[UUID]] = None
-    cutoff_days: Optional[int] = None
-    dry_run: bool = False
-
-
-class BatchArchivalResult(BaseModel):
-    archived_count: int
-    s3_uri: Optional[str] = None
-    records_archived: list[dict[str, Any]] = []
-    status: str
-    message: str
+class BatchReserveRequest(BaseModel):
+    quantity: float

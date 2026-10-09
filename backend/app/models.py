@@ -34,6 +34,7 @@ class User(Base):
     __tablename__ = "users"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
+    organization_id = Column(UUID(as_uuid=True), ForeignKey("organizations.id"), nullable=True)
     email = Column(String, unique=True, index=True, nullable=False)
     full_name = Column(String, nullable=False)
     identity_provider_id = Column(String, unique=True, index=True, nullable=True)
@@ -292,6 +293,16 @@ class InquiryStatus(enum.Enum):
     REJECTED = "REJECTED"
     CLOSED = "CLOSED"
 
+
+class InquiryMessage(Base):
+    __tablename__ = "inquiry_messages"
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
+    inquiry_id = Column(UUID(as_uuid=True), ForeignKey("inquiries.id"), nullable=False)
+    sender_user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+    content = Column(String, nullable=False)
+    is_system_message = Column(Boolean, default=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
 class SampleRequestStatus(enum.Enum):
     REQUESTED = "REQUESTED"
     SHIPPED = "SHIPPED"
@@ -362,22 +373,31 @@ class DocumentAccess(Base):
     revoked_at = Column(DateTime, nullable=True)
 
 
-class WasteTrackingLog(Base):
-    """Historical waste tracking log partitioned by date for 7+ year compliance retention (Issue #68)."""
 
-    __tablename__ = "waste_tracking_logs"
-    __table_args__ = (
-        PrimaryKeyConstraint("id", "created_at"),
-        {"postgresql_partition_by": "RANGE (created_at)"},
-    )
+# --- RLS DDL Events ---
+from sqlalchemy import event, DDL
 
-    id = Column(UUID(as_uuid=True), default=uuid.uuid4, nullable=False)
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
-    batch_id = Column(UUID(as_uuid=True), nullable=True, index=True)
-    listing_id = Column(UUID(as_uuid=True), nullable=True)
-    organization_id = Column(UUID(as_uuid=True), nullable=True, index=True)
-    facility_id = Column(UUID(as_uuid=True), nullable=True)
-    event_type = Column(String, nullable=False, index=True)
-    summary = Column(String, nullable=False)
-    payload = Column(JSON().with_variant(JSONB, "postgresql"), default=dict)
+def setup_rls(target, connection, **kw):
+    if connection.dialect.name == "postgresql":
+        for table in ["material_listings", "facilities", "buyer_specifications", "documents"]:
+            connection.execute(DDL(f"ALTER TABLE {table} ENABLE ROW LEVEL SECURITY;"))
+            connection.execute(DDL(f"ALTER TABLE {table} FORCE ROW LEVEL SECURITY;"))
+            
+            # Policy: users can only see rows where organization_id matches their current_tenant_id
+            # Or if current_tenant_id is not set (e.g., admin), they see nothing or we can handle it.
+            # Here we assume current_tenant_id is always set.
+            # Some tables use 'organization_id', some use 'buyer_organization_id', some use 'owner_organization_id'
+            org_col = "organization_id"
+            if table == "buyer_specifications":
+                org_col = "buyer_organization_id"
+            elif table == "documents":
+                org_col = "owner_organization_id"
+                
+            policy_sql = f"""
+            CREATE POLICY tenant_isolation_policy ON {table}
+            USING ({org_col} = NULLIF(current_setting('wastematch.current_tenant_id', true), '')::uuid)
+            WITH CHECK ({org_col} = NULLIF(current_setting('wastematch.current_tenant_id', true), '')::uuid);
+            """
+            connection.execute(DDL(policy_sql))
 
+event.listen(Base.metadata, 'after_create', setup_rls)

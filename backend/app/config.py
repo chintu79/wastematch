@@ -91,7 +91,7 @@ class Settings(BaseSettings):
             )
         return value
 
-    @field_validator("OIDC_ISSUER", "OIDC_AUDIENCE", "S3_ENDPOINT_URL")
+    @field_validator("OIDC_ISSUER", "S3_ENDPOINT_URL")
     @classmethod
     def _validate_optional_http_url(cls, value: Optional[str]) -> Optional[str]:
         if value is None or value == "":
@@ -99,6 +99,16 @@ class Settings(BaseSettings):
         if not value.startswith(("http://", "https://")):
             raise ValueError(f"must be an http(s) URL, got {value!r}")
         return value
+
+    @field_validator("OIDC_AUDIENCE")
+    @classmethod
+    def _validate_oidc_audience(cls, value: str) -> str:
+        # The OIDC `aud` claim is an opaque identifier (a URI, client id
+        # or any other string), so only require it to be non-empty;
+        # URL-ness is enforced on the issuer above.
+        if not value.strip():
+            raise ValueError("OIDC_AUDIENCE must not be empty")
+        return value.strip()
 
     @field_validator("AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY", "S3_BUCKET_NAME")
     @classmethod
