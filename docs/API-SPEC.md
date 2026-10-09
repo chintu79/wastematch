@@ -324,6 +324,7 @@ All endpoints below are under `/api/v1`. Unless explicitly stated otherwise, aut
 | `POST` | `/admin/regulatory-rules` | Create a draft rule |
 | `POST` | `/admin/regulatory-rules/{rule_id}/approve` | Approve a rule version |
 | `POST` | `/matches/evaluate` | Evaluate candidate matches |
+| `POST` | `/matches/discover` | Pre-filter candidates and queue deep scoring |
 | `GET` | `/matches` | List authorized match results |
 | `GET` | `/matches/{match_id}` | Read match and evaluation details |
 | `POST` | `/matches/{match_id}/re-evaluate` | Create a new evaluation |
@@ -963,6 +964,30 @@ Purpose: create a new evaluation using the latest authorized data and current ap
 The system must preserve the previous evaluation. It must not overwrite historical results in a way that removes the basis of earlier decisions.
 
 If evaluation runs asynchronously, return `202 Accepted` with an evaluation or job identifier and a way to retrieve its status.
+
+### 14.7 Candidate discovery with SQL push-down
+
+`POST /matches/discover`
+
+Purpose: pre-filter every batch against a specification's hard technical constraints in the database, then queue asynchronous deep scoring only for the batches that survive.
+
+Request:
+
+```json
+{
+  "buyer_specification_id": "0f6d8f57-2c91-4b52-a5e5-3bce1b4d3b30",
+  "limit": 100
+}
+```
+
+`limit` (default 100, maximum 1000) caps how many surviving candidates are queued in a single call.
+
+The pre-filter excludes a batch when either condition holds:
+
+- A `HARD_LIMIT` constraint's measurement falls outside its inclusive range, evaluated with SQL `BETWEEN` (or the equivalent one-sided comparison when only one bound is set).
+- The batch has no measurement for a constraint whose missing-data policy is `HOLD`.
+
+Response: `202 Accepted` with `batches_scanned`, `candidates_found`, `candidates_excluded`, `evaluations_queued`, and `queued_batch_ids`. Each queued candidate receives a pending evaluation record and one background scoring task; excluded candidates are never dispatched to the worker.
 
 ---
 

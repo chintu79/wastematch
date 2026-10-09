@@ -116,5 +116,18 @@ def test_production_with_full_config_loads(clean_env):
     assert settings.S3_BUCKET_NAME == "bucket"
 
 
+def test_opaque_oidc_audience_is_accepted(clean_env):
+    # The OIDC `aud` claim need not be a URL (CI uses e.g. 'mock-audience').
+    clean_env.setenv("OIDC_AUDIENCE", "mock-audience")
+    settings = Settings()
+    assert settings.OIDC_AUDIENCE == "mock-audience"
+
+
+def test_empty_oidc_audience_fails(clean_env):
+    clean_env.setenv("OIDC_AUDIENCE", "   ")
+    with pytest.raises(ValidationError, match="OIDC_AUDIENCE"):
+        Settings()
+
+
 def test_get_settings_is_cached(clean_env):
     assert get_settings() is get_settings()
