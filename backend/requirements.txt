@@ -17,3 +17,4 @@ celery
 redis
 PyJWT[crypto]
 requests
+GeoAlchemy2
