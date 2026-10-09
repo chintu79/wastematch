@@ -1,15 +1,29 @@
-version: '3.8'
 services:
   db:
     image: postgres:15-alpine
     environment:
-      POSTGRES_USER: wastematch
-      POSTGRES_PASSWORD: password
-      POSTGRES_DB: wastematch
+      POSTGRES_USER: ${POSTGRES_USER:-wastematch}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password}
+      POSTGRES_DB: ${POSTGRES_DB:-wastematch}
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build: ./backend
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: postgresql+psycopg2://${POSTGRES_USER:-wastematch}:${POSTGRES_PASSWORD:-password}@db:5432/${POSTGRES_DB:-wastematch}
+    depends_on:
+      db:
+        condition: service_healthy
 
 volumes:
   postgres_data:
