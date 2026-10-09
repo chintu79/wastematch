@@ -1,88 +1,48 @@
-'use client';
+"use client";
 
-import React from 'react';
-import { useAuth } from '@/context/AuthContext';
-import { ProducerDashboard } from '@/components/dashboard/ProducerDashboard';
-import { BuyerDashboard } from '@/components/dashboard/BuyerDashboard';
-import { AdminDashboard } from '@/components/dashboard/AdminDashboard';
+import { useState } from "react";
+import Link from "next/link";
+import { ArrowRight, Factory, Recycle } from "lucide-react";
 
-export default function DashboardPage() {
-  const { role, switchRole, user } = useAuth();
-
+export default function DashboardDemoRouter() {
   return (
-    <div className="space-y-6">
-      {/* Quick Role-Switching Banner for UI Reviewers */}
-      <div className="rounded-xl border border-emerald-200 bg-gradient-to-r from-emerald-50 via-teal-50 to-slate-50 p-4 shadow-2xs">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="flex h-2 w-2 rounded-full bg-emerald-600 animate-ping" />
-              <p className="text-xs font-bold text-slate-900 uppercase tracking-wide">
-                Role Context Switcher (Review Mode)
-              </p>
-            </div>
-            <p className="text-xs text-slate-600 mt-0.5">
-              Currently previewing dashboard as:{' '}
-              <span className="font-semibold text-emerald-800">
-                {user?.display_name} ({user?.organization?.name})
-              </span>
-            </p>
-          </div>
+    <div className="flex-1 flex items-center justify-center bg-gray-50 p-8">
+      <div className="max-w-2xl w-full">
+        <h1 className="text-3xl font-bold text-center mb-8 text-gray-900">Select Your Dashboard View</h1>
+        <p className="text-center text-gray-600 mb-12">
+          In a production environment, you would be automatically routed here based on your organization's \`OrgType\`.
+        </p>
 
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-[11px] font-medium text-slate-500">Switch view to:</span>
-            <button
-              type="button"
-              onClick={() => switchRole('waste_supplier')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
-                role === 'waste_supplier'
-                  ? 'bg-emerald-700 text-white shadow-xs'
-                  : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50'
-              }`}
-            >
-              Producer (Generator)
-            </button>
-            <button
-              type="button"
-              onClick={() => switchRole('buyer')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
-                role === 'buyer'
-                  ? 'bg-blue-700 text-white shadow-xs'
-                  : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50'
-              }`}
-            >
-              Buyer (Consumer)
-            </button>
-            <button
-              type="button"
-              onClick={() => switchRole('recycler')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
-                role === 'recycler'
-                  ? 'bg-teal-700 text-white shadow-xs'
-                  : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50'
-              }`}
-            >
-              Recycler (Processor)
-            </button>
-            <button
-              type="button"
-              onClick={() => switchRole('platform_admin')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
-                role === 'platform_admin'
-                  ? 'bg-purple-700 text-white shadow-xs'
-                  : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50'
-              }`}
-            >
-              Admin / Regulator
-            </button>
-          </div>
+        <div className="grid md:grid-cols-2 gap-6">
+          <Link href="/dashboard/producer" className="bg-white border border-gray-200 rounded-xl p-8 hover:shadow-lg transition-all group hover:border-green-300">
+            <div className="bg-green-100 w-16 h-16 rounded-full flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+              <Factory className="w-8 h-8 text-green-600" />
+            </div>
+            <h2 className="text-xl font-bold text-gray-900 mb-2">Producer Dashboard</h2>
+            <p className="text-gray-600 mb-6 line-clamp-2">
+              Focuses on inventory management, active inquiries on waste listings, and strict compliance tracking.
+            </p>
+            <div className="flex items-center text-green-600 font-medium">
+              <span>View Producer UX</span>
+              <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
+            </div>
+          </Link>
+
+          <Link href="/dashboard/buyer" className="bg-white border border-gray-200 rounded-xl p-8 hover:shadow-lg transition-all group hover:border-blue-300">
+            <div className="bg-blue-100 w-16 h-16 rounded-full flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+              <Recycle className="w-8 h-8 text-blue-600" />
+            </div>
+            <h2 className="text-xl font-bold text-gray-900 mb-2">Recycler (Buyer) Dashboard</h2>
+            <p className="text-gray-600 mb-6 line-clamp-2">
+              Focuses on managing buying specifications, finding high-compatibility matches, and requesting samples.
+            </p>
+            <div className="flex items-center text-blue-600 font-medium">
+              <span>View Buyer UX</span>
+              <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
+            </div>
+          </Link>
         </div>
       </div>
-
-      {/* Render Dynamic View Based on Active Role */}
-      {role === 'waste_supplier' && <ProducerDashboard />}
-      {(role === 'buyer' || role === 'recycler') && <BuyerDashboard />}
-      {role === 'platform_admin' && <AdminDashboard />}
     </div>
   );
 }
