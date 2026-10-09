@@ -262,3 +262,33 @@ class SpecificationConstraintResponse(SpecificationConstraintBase):
 
     class Config:
         from_attributes = True
+
+from .models import TechnicalStatus
+
+class MatchEvaluationBase(BaseModel):
+    candidate_id: UUID
+    material_batch_id: UUID
+    buyer_specification_id: UUID
+    regulatory_evaluation_id: Optional[UUID] = None
+    technical_status: TechnicalStatus
+    compatibility_score: Optional[float] = None
+    ranking_score: Optional[float] = None
+    missing_fields: Optional[Dict[str, Any]] = None
+    failed_constraints: Optional[Dict[str, Any]] = None
+    treatment_requirements: Optional[Dict[str, Any]] = None
+    explanation: Optional[Dict[str, Any]] = None
+    matching_algorithm_version: str
+
+class MatchEvaluationCreate(MatchEvaluationBase):
+    pass
+
+class MatchEvaluationResponse(MatchEvaluationBase):
+    id: UUID
+    evaluated_at: datetime
+
+    class Config:
+        from_attributes = True
+
+class MatchRequest(BaseModel):
+    material_batch_id: UUID
+    buyer_specification_id: UUID
