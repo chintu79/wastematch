@@ -215,3 +215,50 @@ class RegulatoryEvaluation(Base):
     evaluated_at = Column(DateTime, default=datetime.utcnow)
     reviewer_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
     review_status = Column(Enum(EvaluationReviewStatus), default=EvaluationReviewStatus.PENDING_REVIEW)
+
+from sqlalchemy import Boolean
+
+class SpecificationStatus(enum.Enum):
+    DRAFT = "DRAFT"
+    PUBLISHED = "PUBLISHED"
+    ARCHIVED = "ARCHIVED"
+
+class ConstraintType(enum.Enum):
+    HARD_LIMIT = "HARD_LIMIT"
+    PREFERRED_RANGE = "PREFERRED_RANGE"
+    PROHIBITED_CONDITION = "PROHIBITED_CONDITION"
+    REQUIRED_PROPERTY = "REQUIRED_PROPERTY"
+
+class MissingDataPolicy(enum.Enum):
+    HOLD = "HOLD"
+    MANUAL_REVIEW = "MANUAL_REVIEW"
+    NOT_APPLICABLE_WITH_EVIDENCE = "NOT_APPLICABLE_WITH_EVIDENCE"
+
+class BuyerSpecification(Base):
+    __tablename__ = "buyer_specifications"
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
+    buyer_organization_id = Column(UUID(as_uuid=True), ForeignKey("organizations.id"), nullable=False)
+    receiving_facility_id = Column(UUID(as_uuid=True), ForeignKey("facilities.id"), nullable=False)
+    target_category_id = Column(UUID(as_uuid=True), ForeignKey("material_categories.id"), nullable=False)
+    intended_use = Column(String, nullable=False)
+    specification_version = Column(Integer, default=1)
+    minimum_quantity = Column(Float, nullable=True)
+    maximum_quantity = Column(Float, nullable=True)
+    quantity_unit = Column(String, nullable=True)
+    specification_status = Column(Enum(SpecificationStatus), default=SpecificationStatus.DRAFT)
+    effective_from = Column(DateTime, nullable=False)
+    effective_until = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+class SpecificationConstraint(Base):
+    __tablename__ = "specification_constraints"
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
+    specification_id = Column(UUID(as_uuid=True), ForeignKey("buyer_specifications.id"), nullable=False)
+    property_definition_id = Column(UUID(as_uuid=True), ForeignKey("property_definitions.id"), nullable=False)
+    constraint_type = Column(Enum(ConstraintType), nullable=False)
+    lower_bound = Column(Float, nullable=True)
+    upper_bound = Column(Float, nullable=True)
+    unit = Column(String, nullable=False)
+    required_evidence = Column(Boolean, default=True)
+    missing_data_policy = Column(Enum(MissingDataPolicy), nullable=False)
+    tolerance_policy = Column(JSON, nullable=True)

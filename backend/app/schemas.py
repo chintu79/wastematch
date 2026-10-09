@@ -214,3 +214,51 @@ class RegulatoryEvaluationResponse(RegulatoryEvaluationBase):
 
     class Config:
         from_attributes = True
+
+from .models import SpecificationStatus, ConstraintType, MissingDataPolicy
+
+class BuyerSpecificationBase(BaseModel):
+    intended_use: str
+    minimum_quantity: Optional[float] = None
+    maximum_quantity: Optional[float] = None
+    quantity_unit: Optional[str] = None
+    effective_from: datetime
+    effective_until: Optional[datetime] = None
+
+class BuyerSpecificationCreate(BuyerSpecificationBase):
+    buyer_organization_id: UUID
+    receiving_facility_id: UUID
+    target_category_id: UUID
+
+class BuyerSpecificationResponse(BuyerSpecificationBase):
+    id: UUID
+    buyer_organization_id: UUID
+    receiving_facility_id: UUID
+    target_category_id: UUID
+    specification_version: int
+    specification_status: SpecificationStatus
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+class SpecificationConstraintBase(BaseModel):
+    constraint_type: ConstraintType
+    lower_bound: Optional[float] = None
+    upper_bound: Optional[float] = None
+    unit: str
+    required_evidence: bool = True
+    missing_data_policy: MissingDataPolicy
+    tolerance_policy: Optional[Dict[str, Any]] = None
+
+class SpecificationConstraintCreate(SpecificationConstraintBase):
+    specification_id: UUID
+    property_definition_id: UUID
+
+class SpecificationConstraintResponse(SpecificationConstraintBase):
+    id: UUID
+    specification_id: UUID
+    property_definition_id: UUID
+
+    class Config:
+        from_attributes = True
