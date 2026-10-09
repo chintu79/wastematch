@@ -10,5 +10,9 @@ __pycache__/
 venv/
 .pytest_cache/
 
+# Local Data Lake Fallback
+data-lake/
+backend/data-lake/
+
 # OS / editor
 .DS_Store

@@ -136,6 +136,9 @@ class MaterialBatchResponse(MaterialBatchBase):
     id: UUID
     listing_id: UUID
     batch_status: BatchStatus
+    is_archived: bool = False
+    archived_at: datetime | None = None
+    archive_s3_uri: str | None = None
     created_at: datetime
 
     class Config:
