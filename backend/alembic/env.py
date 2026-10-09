@@ -12,12 +12,19 @@ sys.path.insert(0, os.path.realpath(os.path.join(os.path.dirname(__file__), '..'
 
 # Import Base and models
 from app.database import Base
+from app.config import get_settings
 import app.models
 
 config = context.config
 
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
+
+# Take the database URL from the validated application settings instead of
+# the hardcoded alembic.ini value (Issue #38). Escape '%' for configparser.
+config.set_main_option(
+    "sqlalchemy.url", get_settings().DATABASE_URL.replace("%", "%%")
+)
 
 target_metadata = Base.metadata
 
