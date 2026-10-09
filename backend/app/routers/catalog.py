@@ -17,9 +17,12 @@ def create_category(category: schemas.MaterialCategoryCreate, db: Session = Depe
     db.refresh(db_cat)
     return db_cat
 
-@router.get("/categories", response_model=list[schemas.MaterialCategoryResponse])
-def get_categories(db: Session = Depends(get_db)):
-    return db.query(models.MaterialCategory).all()
+@router.get("/categories", response_model=schemas.PaginatedResponse[schemas.MaterialCategoryResponse])
+def get_categories(db: Session = Depends(get_db), page: int = 1, size: int = 50):
+    query = db.query(models.MaterialCategory)
+    total = query.count()
+    items = query.offset((page - 1) * size).limit(size).all()
+    return schemas.PaginatedResponse(data=items, total=total, page=page, size=size)
 
 @router.post("/listings", response_model=schemas.MaterialListingResponse, status_code=status.HTTP_201_CREATED)
 def create_listing(listing: schemas.MaterialListingCreate, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
@@ -29,9 +32,12 @@ def create_listing(listing: schemas.MaterialListingCreate, db: Session = Depends
     db.refresh(new_listing)
     return new_listing
 
-@router.get("/listings", response_model=list[schemas.MaterialListingResponse])
-def get_listings(db: Session = Depends(get_db)):
-    return db.query(models.MaterialListing).all()
+@router.get("/listings", response_model=schemas.PaginatedResponse[schemas.MaterialListingResponse])
+def get_listings(db: Session = Depends(get_db), page: int = 1, size: int = 50):
+    query = db.query(models.MaterialListing)
+    total = query.count()
+    items = query.offset((page - 1) * size).limit(size).all()
+    return schemas.PaginatedResponse(data=items, total=total, page=page, size=size)
 
 @router.get("/listings/{listing_id}", response_model=schemas.MaterialListingResponse)
 def get_listing(listing_id: UUID, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):

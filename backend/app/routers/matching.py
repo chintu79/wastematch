@@ -43,9 +43,12 @@ def evaluate_candidate(match_request: schemas.MatchRequest, db: Session = Depend
     
     return db_eval
 
-@router.get("/", response_model=list[schemas.MatchEvaluationResponse])
-def get_matches(db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
-    return db.query(models.MatchEvaluation).all()
+@router.get("/", response_model=schemas.PaginatedResponse[schemas.MatchEvaluationResponse])
+def get_matches(db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user), page: int = 1, size: int = 50):
+    query = db.query(models.MatchEvaluation)
+    total = query.count()
+    items = query.offset((page - 1) * size).limit(size).all()
+    return schemas.PaginatedResponse(data=items, total=total, page=page, size=size)
 
 @router.get("/{match_id}", response_model=schemas.MatchEvaluationResponse)
 def get_match(match_id: UUID, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):

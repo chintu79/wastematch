@@ -17,9 +17,12 @@ def create_inquiry(inquiry: schemas.InquiryCreate, db: Session = Depends(get_db)
     db.refresh(db_inquiry)
     return db_inquiry
 
-@router.get("/", response_model=list[schemas.InquiryResponse])
-def get_inquiries(db: Session = Depends(get_db)):
-    return db.query(models.Inquiry).all()
+@router.get("/", response_model=schemas.PaginatedResponse[schemas.InquiryResponse])
+def get_inquiries(db: Session = Depends(get_db), page: int = 1, size: int = 50):
+    query = db.query(models.Inquiry)
+    total = query.count()
+    items = query.offset((page - 1) * size).limit(size).all()
+    return schemas.PaginatedResponse(data=items, total=total, page=page, size=size)
 
 @router.get("/{inquiry_id}", response_model=schemas.InquiryResponse)
 def get_inquiry(inquiry_id: UUID, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
