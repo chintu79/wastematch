@@ -13,6 +13,7 @@ from .routers import (
     matching,
     regulatory,
     specification,
+    events,
 )
 
 # Configure structlog
@@ -66,6 +67,7 @@ app.include_router(specification.router)
 app.include_router(matching.router)
 app.include_router(inquiries.router)
 app.include_router(documents.router)
+app.include_router(events.router)
 
 @app.get("/")
 def read_root():
