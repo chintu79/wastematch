@@ -3,7 +3,6 @@ from .database import engine, Base
 from .routers import identity, catalog, regulatory, specification, matching, inquiries, documents
 
 # Create tables for now (will be replaced by Alembic later)
-Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="WasteMatch API", version="1.0")
 
