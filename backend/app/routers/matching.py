@@ -7,7 +7,6 @@ from sqlalchemy.orm import Session
 
 from .. import models, schemas
 from ..auth import get_current_user, get_tenant_db
-from ..database import get_db
 from ..worker import process_match_evaluation_async
 from ..limiter import limiter
 

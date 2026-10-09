@@ -5,7 +5,6 @@ from sqlalchemy.orm import Session
 
 from .. import models, schemas
 from ..auth import get_current_user, get_tenant_db
-from ..database import get_db
 
 router = APIRouter(prefix="/api/v1", tags=["identity"])
 
