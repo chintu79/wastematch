@@ -375,3 +375,6 @@ class DocumentAccessResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+class BatchReserveRequest(BaseModel):
+    quantity: float
