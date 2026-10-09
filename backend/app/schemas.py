@@ -365,7 +365,26 @@ class DocumentResponse(DocumentBase):
     id: UUID
     owner_organization_id: UUID
     document_status: DocumentStatus
+    is_deleted: bool
     uploaded_at: datetime
+
+    class Config:
+        from_attributes = True
+
+class DocumentAccessCreate(BaseModel):
+    document_id: UUID
+    granted_to_organization_id: UUID
+    expires_at: Optional[datetime] = None
+
+class DocumentAccessResponse(BaseModel):
+    id: UUID
+    document_id: UUID
+    granted_to_organization_id: UUID
+    granted_by_user_id: UUID
+    granted_at: datetime
+    expires_at: Optional[datetime] = None
+    is_revoked: bool
+    revoked_at: Optional[datetime] = None
 
     class Config:
         from_attributes = True

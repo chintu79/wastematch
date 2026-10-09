@@ -104,7 +104,52 @@ def upload_document_metadata(doc: schemas.DocumentCreate, db: Session = Depends(
 
 @router.get("/{document_id}", response_model=schemas.DocumentResponse)
 def get_document(document_id: UUID, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
-    doc = db.query(models.Document).filter(models.Document.id == document_id).first()
+    doc = db.query(models.Document).filter(models.Document.id == document_id, models.Document.is_deleted == False).first()
     if not doc:
         raise HTTPException(status_code=404, detail="Document not found")
     return doc
+
+@router.post("/{document_id}/access", response_model=schemas.DocumentAccessResponse)
+def grant_document_access(document_id: UUID, access_req: schemas.DocumentAccessCreate, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
+    doc = db.query(models.Document).filter(models.Document.id == document_id, models.Document.is_deleted == False).first()
+    if not doc:
+        raise HTTPException(status_code=404, detail="Document not found")
+        
+    access = models.DocumentAccess(
+        document_id=document_id,
+        granted_to_organization_id=access_req.granted_to_organization_id,
+        granted_by_user_id=current_user.id,
+        expires_at=access_req.expires_at
+    )
+    db.add(access)
+    db.commit()
+    db.refresh(access)
+    return access
+
+@router.delete("/{document_id}/access/{access_id}")
+def revoke_document_access(document_id: UUID, access_id: UUID, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
+    access = db.query(models.DocumentAccess).filter(
+        models.DocumentAccess.id == access_id,
+        models.DocumentAccess.document_id == document_id
+    ).first()
+    
+    if not access:
+        raise HTTPException(status_code=404, detail="Access record not found")
+        
+    access.is_revoked = True
+    from datetime import datetime
+    access.revoked_at = datetime.utcnow()
+    db.commit()
+    return {"status": "success", "message": "Access revoked successfully"}
+
+@router.delete("/{document_id}")
+def delete_document(document_id: UUID, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
+    doc = db.query(models.Document).filter(models.Document.id == document_id, models.Document.is_deleted == False).first()
+    if not doc:
+        raise HTTPException(status_code=404, detail="Document not found")
+    
+    doc.is_deleted = True
+    from datetime import datetime
+    doc.deleted_at = datetime.utcnow()
+    db.commit()
+    return {"status": "success", "message": "Document soft-deleted successfully"}
