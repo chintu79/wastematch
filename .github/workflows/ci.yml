@@ -49,7 +49,7 @@ jobs:
     - name: Test with pytest
       working-directory: ./backend
       env:
-        DATABASE_URL: postgresql://wastematch:password@localhost:5432/wastematch_test
+        DATABASE_URL: postgresql+psycopg2://wastematch:password@localhost:5432/wastematch_test
         OIDC_ISSUER: https://mock-issuer.auth0.com/
         OIDC_CLIENT_ID: mock-client-id
         OIDC_AUDIENCE: mock-audience
