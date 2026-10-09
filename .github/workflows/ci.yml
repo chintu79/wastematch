@@ -50,5 +50,9 @@ jobs:
       working-directory: ./backend
       env:
         DATABASE_URL: postgresql://wastematch:password@localhost:5432/wastematch_test
+        OIDC_ISSUER: https://mock-issuer.auth0.com/
+        OIDC_CLIENT_ID: mock-client-id
+        OIDC_AUDIENCE: mock-audience
+        JWT_SECRET_KEY: mock-secret-key-that-is-at-least-32-chars-long
       run: |
         PYTHONPATH=. pytest --cov=app --cov-report=xml
