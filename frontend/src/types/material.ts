@@ -82,6 +82,33 @@ export interface MaterialListing {
   updated_at: string;
   batches: MaterialBatch[];
   candidate_buyers_count: number;
+  price_per_unit?: number;
+  price_display?: string;
+  distance_km?: number;
+  tags?: string[];
+}
+
+export type SortOption =
+  | 'relevance'
+  | 'recent'
+  | 'quantity_desc'
+  | 'quantity_asc'
+  | 'distance'
+  | 'price_asc'
+  | 'price_desc';
+
+export interface FilterState {
+  query: string;
+  category: string;
+  location: string;
+  maxDistanceKm: number | null;
+  minQuantity: number | null;
+  maxQuantity: number | null;
+  availabilityType: 'ALL' | 'recurring_monthly' | 'recurring_weekly' | 'one_time_lot';
+  pricingModel: 'ALL' | 'fixed_price' | 'quote_only';
+  verifiedOnly: boolean;
+  regulatoryEligibleOnly: boolean;
+  technicalFilters: Record<string, string>;
 }
 
 export interface ListingFormData {
